@@ -38,7 +38,7 @@ pub use z_spectr::ZSpectroscopyResult;
 ///
 /// ```
 /// use std::time::Duration;
-/// use nanonis_rs::ConnectionConfig;
+/// use rusty_tip::ConnectionConfig;
 ///
 /// // Use default timeouts
 /// let config = ConnectionConfig::default();
@@ -80,7 +80,7 @@ impl Default for ConnectionConfig {
 ///
 /// Basic usage:
 /// ```no_run
-/// use nanonis_rs::NanonisClient;
+/// use rusty_tip::NanonisClient;
 ///
 /// let client = NanonisClient::builder()
 ///     .address("127.0.0.1")
@@ -93,7 +93,7 @@ impl Default for ConnectionConfig {
 /// With custom timeouts:
 /// ```no_run
 /// use std::time::Duration;
-/// use nanonis_rs::NanonisClient;
+/// use rusty_tip::NanonisClient;
 ///
 /// let client = NanonisClient::builder()
 ///     .address("192.168.1.100")
@@ -157,15 +157,15 @@ impl NanonisClientBuilder {
     pub fn build(self) -> Result<NanonisClient, NanonisError> {
         let address = self
             .address
-            .ok_or_else(|| NanonisError::InvalidInput("Address must be specified".to_string()))?;
+            .ok_or_else(|| NanonisError::InvalidCommand("Address must be specified".to_string()))?;
 
         let port = self
             .port
-            .ok_or_else(|| NanonisError::InvalidInput("Port must be specified".to_string()))?;
+            .ok_or_else(|| NanonisError::InvalidCommand("Port must be specified".to_string()))?;
 
         let socket_addr: SocketAddr = format!("{address}:{port}")
             .parse()
-            .map_err(|_| NanonisError::InvalidInput(format!("Invalid address: {}", address)))?;
+            .map_err(|_| NanonisError::InvalidAddress(address.clone()))?;
 
         debug!("Connecting to Nanonis at {address}");
 
@@ -173,9 +173,12 @@ impl NanonisClientBuilder {
             .map_err(|e| {
                 warn!("Failed to connect to {address}: {e}");
                 if e.kind() == std::io::ErrorKind::TimedOut {
-                    NanonisError::Timeout(format!("Connection to {} timed out", address))
+                    NanonisError::Timeout
                 } else {
-                    NanonisError::io_context(e, format!("Failed to connect to {}", address))
+                    NanonisError::Io {
+                        source: e,
+                        context: format!("Failed to connect to {address}"),
+                    }
                 }
             })?;
 
@@ -218,12 +221,12 @@ impl NanonisClientBuilder {
 ///
 /// Basic usage:
 /// ```no_run
-/// use nanonis_rs::NanonisClient;
+/// use rusty_tip::NanonisClient;
 ///
 /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
 ///
 /// // Read signal names
-/// let signals = client.signal_names_get()?;
+/// let signals = client.signal_names_get(false)?;
 ///
 /// // Set bias voltage
 /// client.set_bias(1.0)?;
@@ -236,7 +239,7 @@ impl NanonisClientBuilder {
 /// With builder pattern:
 /// ```no_run
 /// use std::time::Duration;
-/// use nanonis_rs::NanonisClient;
+/// use rusty_tip::NanonisClient;
 ///
 /// let mut client = NanonisClient::builder()
 ///     .address("192.168.1.100")
@@ -273,7 +276,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let client = NanonisClient::new("127.0.0.1", 6501)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
@@ -293,7 +296,7 @@ impl NanonisClient {
     /// # Examples
     /// ```no_run
     /// use std::time::Duration;
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let client = NanonisClient::builder()
     ///     .address("192.168.1.100")
@@ -374,14 +377,20 @@ impl NanonisClient {
         debug!("Sending header ({} bytes)...", header.len());
         self.stream.write_all(&header).map_err(|e| {
             debug!("Failed to write header: {}", e);
-            NanonisError::io_context(e, "writing command header")
+            NanonisError::Io {
+                source: e,
+                context: "Writing command header".to_string(),
+            }
         })?;
 
         if !body.is_empty() {
             debug!("Sending body ({} bytes)...", body.len());
             self.stream.write_all(&body).map_err(|e| {
                 debug!("Failed to write body: {}", e);
-                NanonisError::io_context(e, "writing command body")
+                NanonisError::Io {
+                    source: e,
+                    context: "Writing command body".to_string(),
+                }
             })?;
         }
 
@@ -445,7 +454,7 @@ impl NanonisClient {
 
 impl Drop for NanonisClient {
     fn drop(&mut self) {
-        let _ = self.z_ctrl_withdraw(false, Duration::from_secs(1));
-        let _ = self.motor_start_move(MotorDirection::ZPlus, 2u16, MotorGroup::Group1, false);
+        let _ = self.z_ctrl_withdraw(false, Duration::from_secs(2));
+        let _ = self.motor_start_move(MotorDirection::ZMinus, 15u16, MotorGroup::Group1, false);
     }
 }

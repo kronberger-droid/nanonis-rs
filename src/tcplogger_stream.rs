@@ -29,15 +29,20 @@ impl TCPLoggerStream {
     pub fn new(addr: &str, stream_port: u16) -> Result<Self, NanonisError> {
         let socket_addr: SocketAddr = format!("{addr}:{stream_port}")
             .parse()
-            .map_err(|_| NanonisError::InvalidInput(format!("Invalid address: {}", addr)))?;
+            .map_err(|_| NanonisError::InvalidAddress(addr.to_string()))?;
 
-        let stream = TcpStream::connect(socket_addr)
-            .map_err(|e| NanonisError::io_context(e, format!("connecting to TCP stream at {}", socket_addr)))?;
+        let stream = TcpStream::connect(socket_addr).map_err(|e| NanonisError::Io {
+            source: e,
+            context: format!("Failed to connect to TCP stream at {}", socket_addr),
+        })?;
 
         // Set read timeout for continuous reading
         stream
             .set_read_timeout(Some(Duration::from_secs(30)))
-            .map_err(|e| NanonisError::io_context(e, "setting TCP stream read timeout"))?;
+            .map_err(|e| NanonisError::Io {
+                source: e,
+                context: "Setting TCP stream read timeout".to_string(),
+            })?;
 
         Ok(Self {
             stream,
@@ -82,7 +87,10 @@ impl TCPLoggerStream {
         // Read header into buffer
         self.stream
             .read_exact(&mut self.buffer[..header_size])
-            .map_err(|e| NanonisError::io_context(e, "reading TCP Logger frame header"))?;
+            .map_err(|e| NanonisError::Io {
+                source: e,
+                context: "Reading TCP Logger frame header".to_string(),
+            })?;
 
         // Parse header from buffer
         let mut cursor = Cursor::new(&self.buffer[..header_size]);
@@ -98,7 +106,10 @@ impl TCPLoggerStream {
 
         self.stream
             .read_exact(&mut self.buffer[..data_size])
-            .map_err(|e| NanonisError::io_context(e, "reading TCP Logger frame data"))?;
+            .map_err(|e| NanonisError::Io {
+                source: e,
+                context: "Reading TCP Logger frame data".to_string(),
+            })?;
 
         // Parse data values from buffer
         let mut cursor = Cursor::new(&self.buffer[..data_size]);

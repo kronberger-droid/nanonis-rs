@@ -1,7 +1,13 @@
 [package]
 name = "nanonis-rs"
-version = "0.2.0"
+version = "0.0.3"
 edition = "2021"
+description = "Rust client library for Nanonis SPM system control via TCP"
+repository = "https://github.com/kronberger-droid/nanonis-rs"
+license = "MIT"
+authors = ["Martin Kronberger <kronberger@proton.me>"]
+keywords = ["nanonis", "spm", "stm", "afm", "microscopy"]
+categories = ["science", "api-bindings"]
 
 [dependencies]
 byteorder = "1.5"

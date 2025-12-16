@@ -119,7 +119,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::{NanonisClient, SignalIndex};
+    /// use rusty_tip::{NanonisClient, SignalIndex};
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -172,7 +172,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -222,7 +222,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -278,7 +278,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///

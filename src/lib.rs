@@ -46,6 +46,7 @@ pub use types::{
     SampleCount,
     // Control/Scan
     ScanAction,
+    ScanConfig,
     ScanDirection,
     ScanFrame,
     SignalFrame,

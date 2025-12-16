@@ -328,16 +328,16 @@ impl From<u8> for ChannelIndex {
     }
 }
 
-/// Signal index (0-127, but stored as usize for convenience)
+/// Nanonis signal index (0-127) for TCP protocol
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SignalIndex(pub u8);
 
 impl SignalIndex {
-    pub const fn new(index: u8) -> Self {
+    pub fn new(index: u8) -> Self {
         Self(index)
     }
 
-    pub const fn get(self) -> u8 {
+    pub fn get(&self) -> u8 {
         self.0
     }
 }
@@ -416,7 +416,7 @@ impl TryFrom<u32> for MotorDirection {
             3 => Ok(MotorDirection::YMinus),
             4 => Ok(MotorDirection::ZPlus),
             5 => Ok(MotorDirection::ZMinus),
-            _ => Err(NanonisError::InvalidInput(format!(
+            _ => Err(NanonisError::InvalidCommand(format!(
                 "Invalid motor direction: {}",
                 value
             ))),
@@ -451,7 +451,7 @@ impl TryFrom<u32> for MotorGroup {
             3 => Ok(MotorGroup::Group4),
             4 => Ok(MotorGroup::Group5),
             5 => Ok(MotorGroup::Group6),
-            _ => Err(NanonisError::InvalidInput(format!(
+            _ => Err(NanonisError::InvalidCommand(format!(
                 "Invalid motor group: {}",
                 value
             ))),
@@ -602,7 +602,7 @@ impl TryFrom<u32> for MovementMode {
         match value {
             0 => Ok(MovementMode::Relative),
             1 => Ok(MovementMode::Absolute),
-            _ => Err(NanonisError::InvalidInput(format!(
+            _ => Err(NanonisError::InvalidCommand(format!(
                 "Invalid movement mode: {}",
                 value
             ))),
@@ -764,7 +764,7 @@ impl TryFrom<u16> for ScanAction {
             4 => Ok(ScanAction::Freeze),
             5 => Ok(ScanAction::Unfreeze),
             6 => Ok(ScanAction::GoToCenter),
-            _ => Err(NanonisError::InvalidInput(format!(
+            _ => Err(NanonisError::InvalidCommand(format!(
                 "Invalid scan action: {}",
                 value
             ))),
@@ -791,12 +791,22 @@ impl TryFrom<u32> for ScanDirection {
         match value {
             0 => Ok(ScanDirection::Down),
             1 => Ok(ScanDirection::Up),
-            _ => Err(NanonisError::InvalidInput(format!(
+            _ => Err(NanonisError::InvalidCommand(format!(
                 "Invalid scan direction: {}",
                 value
             ))),
         }
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct ScanConfig {
+    pub forward_linear_speed_m_s: f32,
+    pub backward_linear_speed_m_s: f32,
+    pub forward_time_per_line_s: f32,
+    pub backward_time_per_line_s: f32,
+    pub keep_parameter_constant: u16,
+    pub speed_ratio: f32,
 }
 
 // ==================== Control Types ====================
@@ -878,7 +888,7 @@ impl TryFrom<u16> for TriggerSlope {
         match value {
             0 => Ok(TriggerSlope::Falling),
             1 => Ok(TriggerSlope::Rising),
-            _ => Err(NanonisError::InvalidInput(format!(
+            _ => Err(NanonisError::InvalidCommand(format!(
                 "Invalid trigger slope: {}",
                 value
             ))),
@@ -963,7 +973,7 @@ impl TryFrom<u16> for OsciTriggerMode {
             0 => Ok(OsciTriggerMode::Immediate),
             1 => Ok(OsciTriggerMode::Level),
             2 => Ok(OsciTriggerMode::Auto),
-            _ => Err(NanonisError::InvalidInput(format!(
+            _ => Err(NanonisError::InvalidCommand(format!(
                 "Invalid oscilloscope trigger mode: {}",
                 value
             ))),
@@ -998,7 +1008,7 @@ impl TryFrom<u16> for OversamplingIndex {
             3 => Ok(OversamplingIndex::Samples5),
             4 => Ok(OversamplingIndex::Samples2),
             5 => Ok(OversamplingIndex::Samples1),
-            _ => Err(NanonisError::InvalidInput(format!(
+            _ => Err(NanonisError::InvalidCommand(format!(
                 "Invalid oversampling index: {}",
                 value
             ))),
@@ -1233,7 +1243,7 @@ impl TryFrom<i32> for TCPLogStatus {
             5 => Ok(TCPLogStatus::TCPConnect),
             6 => Ok(TCPLogStatus::TCPDisconnect),
             7 => Ok(TCPLogStatus::BufferOverflow),
-            _ => Err(NanonisError::InvalidInput(format!(
+            _ => Err(NanonisError::InvalidCommand(format!(
                 "Invalid TCP Logger status: {}",
                 value
             ))),

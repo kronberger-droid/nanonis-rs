@@ -18,7 +18,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -46,7 +46,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -80,7 +80,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -94,7 +94,7 @@ impl NanonisClient {
     pub fn tcplog_chs_set(&mut self, channel_indexes: Vec<i32>) -> Result<(), NanonisError> {
         for &index in &channel_indexes {
             if !(0..=23).contains(&index) {
-                return Err(NanonisError::InvalidInput(
+                return Err(NanonisError::InvalidCommand(
                     format!("Invalid signal slot index: {}. Must be between 0-23 (signal slots, not full signal indices)", index)
                 ));
             }
@@ -131,7 +131,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -144,7 +144,7 @@ impl NanonisClient {
     /// ```
     pub fn tcplog_oversampl_set(&mut self, oversampling_value: i32) -> Result<(), NanonisError> {
         if !(0..=1000).contains(&oversampling_value) {
-            return Err(NanonisError::InvalidInput(format!(
+            return Err(NanonisError::InvalidCommand(format!(
                 "Invalid oversampling value: {}. Must be between 0-1000",
                 oversampling_value
             )));
@@ -172,7 +172,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::{NanonisClient, TCPLogStatus};
+    /// use rusty_tip::{NanonisClient, TCPLogStatus};
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///

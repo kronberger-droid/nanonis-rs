@@ -90,7 +90,7 @@ impl Protocol {
 
             let trimmed_msg = error_msg.trim();
             if !trimmed_msg.is_empty() {
-                return Err(NanonisError::Server {
+                return Err(NanonisError::ServerError {
                     code: error_status,
                     message: trimmed_msg.to_string(),
                 });
@@ -118,7 +118,10 @@ impl Protocol {
             }
             Err(e) => {
                 debug!("Failed to read {} bytes: {} (kind: {:?})", N, e, e.kind());
-                Err(NanonisError::io_context(e, format!("reading {} bytes from Nanonis", N)))
+                Err(NanonisError::Io {
+                    source: e,
+                    context: format!("Failed to read {} bytes from Nanonis", N),
+                })
             }
         }
     }
@@ -169,7 +172,10 @@ impl Protocol {
                         }
                     );
                 }
-                Err(NanonisError::io_context(e, format!("reading {} byte response body", size)))
+                Err(NanonisError::Io {
+                    source: e,
+                    context: format!("Failed to read {} byte response body", size),
+                })
             }
         }
     }
@@ -650,10 +656,10 @@ impl Protocol {
         if received_command == expected_command {
             Ok(response_body_size)
         } else {
-            Err(NanonisError::Protocol(format!(
-                "Command mismatch: expected {}, got {}",
-                expected_command, received_command
-            )))
+            Err(NanonisError::CommandMismatch {
+                expected: expected_command.to_string(),
+                actual: received_command,
+            })
         }
     }
 }

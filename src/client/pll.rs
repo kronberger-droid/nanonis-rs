@@ -17,7 +17,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -61,7 +61,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -85,7 +85,7 @@ impl NanonisClient {
 
         match response.first() {
             Some(NanonisValue::F32(setpoint)) => Ok(*setpoint),
-            _ => Err(NanonisError::Protocol(
+            _ => Err(NanonisError::SerializationError(
                 "Expected f32 amplitude setpoint".to_string(),
             )),
         }
@@ -106,7 +106,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -152,7 +152,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -180,7 +180,7 @@ impl NanonisClient {
 
         match response.first() {
             Some(NanonisValue::U32(status)) => Ok(*status != 0),
-            _ => Err(NanonisError::Protocol(
+            _ => Err(NanonisError::InvalidResponse(
                 "Expected u32 amplitude controller status".to_string(),
             )),
         }
@@ -202,7 +202,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -248,7 +248,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::NanonisClient;
+    /// use rusty_tip::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -280,7 +280,7 @@ impl NanonisClient {
             (Some(NanonisValue::F32(p_gain)), Some(NanonisValue::F32(time_const))) => {
                 Ok((*p_gain, *time_const))
             }
-            _ => Err(NanonisError::Protocol(
+            _ => Err(NanonisError::InvalidResponse(
                 "Expected f32 gain parameters (p_gain, time_constant)".to_string(),
             )),
         }
