@@ -38,7 +38,7 @@ pub use z_spectr::ZSpectroscopyResult;
 ///
 /// ```
 /// use std::time::Duration;
-/// use rusty_tip::ConnectionConfig;
+/// use nanonis_rs::ConnectionConfig;
 ///
 /// // Use default timeouts
 /// let config = ConnectionConfig::default();
@@ -80,7 +80,7 @@ impl Default for ConnectionConfig {
 ///
 /// Basic usage:
 /// ```no_run
-/// use rusty_tip::NanonisClient;
+/// use nanonis_rs::NanonisClient;
 ///
 /// let client = NanonisClient::builder()
 ///     .address("127.0.0.1")
@@ -93,7 +93,7 @@ impl Default for ConnectionConfig {
 /// With custom timeouts:
 /// ```no_run
 /// use std::time::Duration;
-/// use rusty_tip::NanonisClient;
+/// use nanonis_rs::NanonisClient;
 ///
 /// let client = NanonisClient::builder()
 ///     .address("192.168.1.100")
@@ -221,12 +221,12 @@ impl NanonisClientBuilder {
 ///
 /// Basic usage:
 /// ```no_run
-/// use rusty_tip::NanonisClient;
+/// use nanonis_rs::NanonisClient;
 ///
 /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
 ///
 /// // Read signal names
-/// let signals = client.signal_names_get(false)?;
+/// let signals = client.signal_names_get()?;
 ///
 /// // Set bias voltage
 /// client.set_bias(1.0)?;
@@ -239,7 +239,7 @@ impl NanonisClientBuilder {
 /// With builder pattern:
 /// ```no_run
 /// use std::time::Duration;
-/// use rusty_tip::NanonisClient;
+/// use nanonis_rs::NanonisClient;
 ///
 /// let mut client = NanonisClient::builder()
 ///     .address("192.168.1.100")
@@ -276,7 +276,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let client = NanonisClient::new("127.0.0.1", 6501)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
@@ -296,7 +296,7 @@ impl NanonisClient {
     /// # Examples
     /// ```no_run
     /// use std::time::Duration;
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let client = NanonisClient::builder()
     ///     .address("192.168.1.100")

@@ -18,7 +18,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -58,7 +58,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -97,7 +97,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -137,7 +137,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -174,7 +174,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -210,7 +210,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -244,7 +244,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -289,7 +289,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -328,7 +328,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -363,7 +363,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     /// use std::time::Duration;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;

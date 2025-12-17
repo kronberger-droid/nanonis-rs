@@ -37,7 +37,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -70,7 +70,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -99,7 +99,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -129,7 +129,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -191,7 +191,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -236,16 +236,17 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
+    /// use std::time::Duration;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
     /// // Start tip shaping and wait for completion (30 second timeout)
-    /// client.tip_shaper_start(true, 30000)?;
+    /// client.tip_shaper_start(true, Duration::from_secs(30))?;
     /// println!("Tip shaping completed");
     ///
     /// // Start tip shaping without waiting
-    /// client.tip_shaper_start(false, 0)?;
+    /// client.tip_shaper_start(false, Duration::ZERO)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn tip_shaper_start(
@@ -279,7 +280,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::{NanonisClient, TipShaperConfig};
+    /// use nanonis_rs::{NanonisClient, TipShaperConfig};
     /// use std::time::Duration;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
@@ -287,7 +288,7 @@ impl NanonisClient {
     /// // Conservative tip conditioning parameters
     /// let config = TipShaperConfig {
     ///     switch_off_delay: Duration::from_millis(100),
-    ///     change_bias: 1,      // true
+    ///     change_bias: true,
     ///     bias_v: -2.0,
     ///     tip_lift_m: 50e-9,   // 50 nm
     ///     lift_time_1: Duration::from_secs(1),
@@ -296,7 +297,7 @@ impl NanonisClient {
     ///     lift_height_m: 100e-9, // 100 nm
     ///     lift_time_2: Duration::from_millis(500),
     ///     end_wait_time: Duration::from_millis(200),
-    ///     restore_feedback: 1, // true
+    ///     restore_feedback: true,
     /// };
     /// client.tip_shaper_props_set(config)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
@@ -347,7 +348,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -402,7 +403,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     /// use std::time::Duration;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;

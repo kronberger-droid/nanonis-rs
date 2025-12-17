@@ -96,7 +96,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -136,7 +136,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -185,15 +185,20 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::{NanonisClient, ScanConfig};
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
     /// // Set 1 μm/s forward, 2 μm/s backward, keep linear speed constant
-    /// client.scan_speed_set(1e-6, 2e-6, 0.1, 0.05, 1, 2.0)?;
-    ///
-    /// // Set based on time per line, equal forward/backward speed
-    /// client.scan_speed_set(1e-6, 1e-6, 0.1, 0.1, 2, 1.0)?;
+    /// let config = ScanConfig {
+    ///     forward_linear_speed_m_s: 1e-6,
+    ///     backward_linear_speed_m_s: 2e-6,
+    ///     forward_time_per_line_s: 0.1,
+    ///     backward_time_per_line_s: 0.05,
+    ///     keep_parameter_constant: 1,
+    ///     speed_ratio: 2.0,
+    /// };
+    /// client.scan_config_set(config)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn scan_config_set(&mut self, config: ScanConfig) -> Result<(), NanonisError> {
@@ -232,16 +237,15 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
-    /// let (fwd_speed, bwd_speed, fwd_time, bwd_time, keep_param, speed_ratio) =
-    ///     client.scan_speed_get()?;
+    /// let config = client.scan_speed_get()?;
     ///
-    /// println!("Forward speed: {:.2e} m/s", fwd_speed);
-    /// println!("Backward speed: {:.2e} m/s", bwd_speed);
-    /// println!("Speed ratio: {:.1}", speed_ratio);
+    /// println!("Forward speed: {:.2e} m/s", config.forward_linear_speed_m_s);
+    /// println!("Backward speed: {:.2e} m/s", config.backward_linear_speed_m_s);
+    /// println!("Speed ratio: {:.1}", config.speed_ratio);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn scan_speed_get(&mut self) -> Result<ScanConfig, NanonisError> {
@@ -284,7 +288,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -332,7 +336,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -390,7 +394,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::NanonisClient;
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -462,7 +466,7 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use rusty_tip::{NanonisClient, ScanAction, ScanDirection};
+    /// use nanonis_rs::{NanonisClient, ScanAction, ScanDirection};
     /// use std::time::Duration;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
