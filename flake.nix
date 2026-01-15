@@ -24,9 +24,12 @@
         };
 
         # Rust toolchain configuration
+        # Pin to Rust 1.89.0
         rustTools = {
-          stable = fenix.packages.${system}.stable.toolchain;
-          analyzer = fenix.packages.${system}.latest.rust-analyzer;
+          stable = pkgs.rust-bin.stable."1.89.0".default.override {
+            extensions = ["rust-src"];
+          };
+          analyzer = pkgs.rust-bin.stable."1.89.0".rust-analyzer;
         };
 
         # Development tools

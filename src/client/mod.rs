@@ -1,7 +1,6 @@
 use super::protocol::{Protocol, HEADER_SIZE};
 use crate::error::NanonisError;
 use crate::types::NanonisValue;
-use crate::{MotorDirection, MotorGroup};
 use log::{debug, warn};
 use std::io::Write;
 use std::net::{SocketAddr, TcpStream};
@@ -13,9 +12,7 @@ pub mod bias_sweep;
 pub mod current;
 pub mod folme;
 pub mod motor;
-pub mod osci_1t;
-pub mod osci_2t;
-pub mod osci_hr;
+pub mod oscilloscope;
 pub mod pll;
 pub mod safe_tip;
 pub mod scan;
@@ -454,6 +451,7 @@ impl NanonisClient {
 
 impl Drop for NanonisClient {
     fn drop(&mut self) {
+        use motor::{MotorDirection, MotorGroup};
         let _ = self.z_ctrl_withdraw(false, Duration::from_secs(2));
         let _ = self.motor_start_move(MotorDirection::ZMinus, 15u16, MotorGroup::Group1, false);
     }

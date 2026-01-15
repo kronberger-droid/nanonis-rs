@@ -1,6 +1,6 @@
 use crate::error::NanonisError;
-use crate::types::TCPLogStatus;
-use crate::SignalFrame;
+use crate::signals::SignalFrame;
+use crate::tcplog::TCPLogStatus;
 use byteorder::{BigEndian, ReadBytesExt};
 use std::io::{Cursor, Read};
 use std::net::{SocketAddr, TcpStream};

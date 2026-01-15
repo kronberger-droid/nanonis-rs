@@ -45,6 +45,29 @@ The Nix shell provides:
 
 ## Architecture
 
+### Module Organization (v0.3.0+)
+
+Domain-specific types are now organized into modules for better maintainability:
+
+**Domain Modules:**
+- `motor::*` - Motor control types (MotorDirection, MotorGroup, MotorAxis, StepCount, Frequency, Amplitude, Position3D, MovementMode, MotorMovement, MotorDisplacement)
+- `scan::*` - Scan types (ScanFrame, ScanAction, ScanDirection, ScanConfig)
+- `z_controller::*` - Z-controller types (ZControllerHold)
+- `bias::*` - Bias types (PulseMode)
+- `oscilloscope::*` - Oscilloscope types (TriggerMode, TriggerSlope, TriggerLevel, SampleCount, OsciTriggerMode, OversamplingIndex, TimebaseIndex, DataToGet, TriggerConfig, SignalStats, OsciData, OscilloscopeIndex)
+- `signals::*` - Signal types (SignalIndex, SignalFrame)
+- `tcplog::*` - TCP logger types (ChannelIndex, TCPLogStatus, TCPLoggerData)
+
+**Import Examples:**
+```rust
+use nanonis_rs::NanonisClient;
+use nanonis_rs::motor::{MotorDirection, MotorGroup};
+use nanonis_rs::scan::{ScanFrame, ScanAction};
+use nanonis_rs::oscilloscope::TriggerConfig;
+```
+
+**Core types at root:** `NanonisClient`, `NanonisError`, `NanonisValue`, `Position`
+
 ### Protocol Layer (`src/protocol.rs`)
 
 The low-level protocol implementation handles Nanonis TCP message encoding/decoding:

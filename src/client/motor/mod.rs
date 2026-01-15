@@ -1,9 +1,9 @@
+mod types;
+pub use types::*;
+
 use super::NanonisClient;
 use crate::error::NanonisError;
-use crate::types::{
-    Amplitude, Frequency, MotorAxis, MotorDirection, MotorGroup, MovementMode,
-    NanonisValue, Position3D,
-};
+use crate::types::NanonisValue;
 use std::time::Duration;
 
 impl NanonisClient {

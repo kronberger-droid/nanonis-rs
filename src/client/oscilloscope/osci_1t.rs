@@ -1,4 +1,4 @@
-use super::NanonisClient;
+use super::super::NanonisClient;
 use crate::error::NanonisError;
 use crate::types::NanonisValue;
 

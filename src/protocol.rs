@@ -316,6 +316,20 @@ impl Protocol {
                     cursor.read_exact(&mut string_bytes)?;
                 }
 
+                "*+i" => {
+                    let array_count = if let Some(&prev_val) = result.last() {
+                        prev_val as usize
+                    } else {
+                        return Err(NanonisError::Protocol(
+                            "Array count not found for *+i type".to_string(),
+                        ));
+                    };
+
+                    for _ in 0..array_count {
+                        cursor.read_i32::<BigEndian>()?;
+                    }
+                }
+
                 "2f" => {
                     if result.len() < 2 {
                         return Err(NanonisError::Protocol(
@@ -362,6 +376,20 @@ impl Protocol {
                     buffer.write_u32::<BigEndian>(bytes.len() as u32)?;
                 }
                 buffer.extend_from_slice(bytes);
+            }
+
+            (NanonisValue::ArrayString(arr), "+*c") => {
+                // Write total byte size (sum of all string lengths + size prefixes)
+                let total_size: usize = arr.iter().map(|s| 4 + s.len()).sum();
+                buffer.write_u32::<BigEndian>(total_size as u32)?;
+                // Write number of strings
+                buffer.write_u32::<BigEndian>(arr.len() as u32)?;
+                // Write each string with its length prepended
+                for s in arr {
+                    let bytes = s.as_bytes();
+                    buffer.write_u32::<BigEndian>(bytes.len() as u32)?;
+                    buffer.extend_from_slice(bytes);
+                }
             }
 
             (NanonisValue::ArrayString(arr), "*+c") => {
@@ -577,6 +605,28 @@ impl Protocol {
                     let string = String::from_utf8_lossy(&string_bytes).to_string();
 
                     NanonisValue::String(string)
+                }
+
+                // Handle integer arrays with count from previous variable (*+i)
+                "*+i" => {
+                    // Get array count from previous variable (should be an integer)
+                    let array_count = match result.last() {
+                        Some(NanonisValue::I32(count)) => *count as usize,
+                        Some(NanonisValue::U32(count)) => *count as usize,
+                        _ => {
+                            return Err(NanonisError::Protocol(
+                                "Array count not found for *+i type".to_string(),
+                            ))
+                        }
+                    };
+
+                    // Read the integer array
+                    let mut arr = Vec::with_capacity(array_count);
+                    for _ in 0..array_count {
+                        arr.push(cursor.read_i32::<BigEndian>()?);
+                    }
+
+                    NanonisValue::ArrayI32(arr)
                 }
 
                 "2f" => {

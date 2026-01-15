@@ -1,3 +1,6 @@
+mod types;
+pub use types::*;
+
 use std::time::Duration;
 
 use super::NanonisClient;

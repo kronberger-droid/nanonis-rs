@@ -1,6 +1,9 @@
+mod types;
+pub use types::*;
+
 use super::NanonisClient;
 use crate::error::NanonisError;
-use crate::types::{NanonisValue, SignalIndex};
+use crate::types::NanonisValue;
 
 impl NanonisClient {
     /// Get available signal names
@@ -119,7 +122,8 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::{NanonisClient, SignalIndex};
+    /// use nanonis_rs::NanonisClient;
+    /// use nanonis_rs::signals::SignalIndex;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///

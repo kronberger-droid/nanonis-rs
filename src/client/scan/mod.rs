@@ -1,6 +1,9 @@
+mod types;
+pub use types::*;
+
 use super::NanonisClient;
 use crate::error::NanonisError;
-use crate::types::{NanonisValue, Position, ScanAction, ScanConfig, ScanDirection, ScanFrame};
+use crate::types::{NanonisValue, Position};
 use std::time::Duration;
 
 impl NanonisClient {
@@ -185,7 +188,8 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::{NanonisClient, ScanConfig};
+    /// use nanonis_rs::NanonisClient;
+    /// use nanonis_rs::scan::ScanConfig;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
@@ -466,7 +470,8 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::{NanonisClient, ScanAction, ScanDirection};
+    /// use nanonis_rs::NanonisClient;
+    /// use nanonis_rs::scan::{ScanAction, ScanDirection};
     /// use std::time::Duration;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
@@ -507,5 +512,180 @@ impl NanonisClient {
                 "Invalid scan wait response".to_string(),
             ))
         }
+    }
+
+    /// Get scan properties configuration.
+    ///
+    /// Returns current scan properties including continuous scan, bouncy scan,
+    /// autosave, series name, comment, modules names, and autopaste settings.
+    ///
+    /// # Returns
+    /// `ScanProps` structure containing all scan property settings
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails or protocol error occurs.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use nanonis_rs::NanonisClient;
+    ///
+    /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
+    ///
+    /// let props = client.scan_props_get()?;
+    /// println!("Continuous scan: {:?}", props.continuous_scan);
+    /// println!("Bouncy scan: {:?}", props.bouncy_scan);
+    /// println!("Series name: {}", props.series_name);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn scan_props_get(&mut self) -> Result<ScanProps, NanonisError> {
+        let result = self.quick_send(
+            "Scan.PropsGet",
+            vec![],
+            vec![],
+            vec!["I", "I", "I", "i", "*-c", "i", "*-c", "i", "i", "*+c", "i", "*+i", "i", "i", "*+c", "I"],
+        )?;
+
+        if result.len() >= 16 {
+            // Index 0: Continuous scan (0=Off, 1=On)
+            let continuous_scan = result[0].as_u32()? == 1;
+
+            // Index 1: Bouncy scan (0=Off, 1=On)
+            let bouncy_scan = result[1].as_u32()? == 1;
+
+            // Index 2: Autosave (0=All, 1=Next, 2=Off)
+            let autosave = AutosaveMode::try_from(result[2].as_u32()?)?;
+
+            // Index 3: series_name size (i)
+            // Index 4: series_name string (*-c)
+            let series_name = result[4].as_string()?.to_string();
+
+            // Index 5: comment size (i)
+            // Index 6: comment string (*-c)
+            let comment = result[6].as_string()?.to_string();
+
+            // Index 7: modules_names size (i)
+            // Index 8: modules_names count (i)
+            // Index 9: modules_names array (*+c)
+            let modules_names = result[9].as_string_array()?.to_vec();
+
+            // Index 10: num_params_per_module array size (i)
+            // Index 11: num_params_per_module array (*+i)
+            let num_params_per_module = result[11].as_i32_array()?.to_vec();
+
+            // Index 12: parameters rows (i)
+            let rows = result[12].as_i32()?;
+            // Index 13: parameters columns (i)
+            let cols = result[13].as_i32()?;
+            // Index 14: parameters 2D array (*+c)
+            let params_flat = result[14].as_string_array()?;
+
+            // Convert flat array to 2D (rows x cols)
+            let mut parameters = Vec::new();
+            for row in 0..rows as usize {
+                let mut row_params = Vec::new();
+                for col in 0..cols as usize {
+                    let idx = row * (cols as usize) + col;
+                    if idx < params_flat.len() {
+                        row_params.push(params_flat[idx].clone());
+                    }
+                }
+                parameters.push(row_params);
+            }
+
+            // Index 15: Autopaste (0=All, 1=Next, 2=Off)
+            let autopaste = AutopasteMode::try_from(result[15].as_u32()?)?;
+
+            Ok(ScanProps {
+                continuous_scan,
+                bouncy_scan,
+                autosave,
+                series_name,
+                comment,
+                modules_names,
+                num_params_per_module,
+                parameters,
+                autopaste,
+            })
+        } else {
+            Err(NanonisError::Protocol(format!(
+                "Invalid scan props response: expected 16 values, got {}",
+                result.len()
+            )))
+        }
+    }
+
+    /// Set scan properties configuration.
+    ///
+    /// Configures scan parameters including continuous scan, bouncy scan,
+    /// autosave behavior, series name, comment, and autopaste settings.
+    /// Use `ScanPropsBuilder` to set only the properties you want to change.
+    ///
+    /// # Arguments
+    /// * `builder` - Builder with properties to set. Fields set to `None` will not be changed.
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails or invalid parameters provided.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use nanonis_rs::NanonisClient;
+    /// use nanonis_rs::scan::{ScanPropsBuilder, AutosaveMode, AutopasteMode};
+    ///
+    /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
+    ///
+    /// // Set only specific properties using the builder
+    /// let builder = ScanPropsBuilder::new()
+    ///     .continuous_scan(true)        // Enable continuous scan
+    ///     .bouncy_scan(true)            // Enable bouncy scan
+    ///     .autosave(AutosaveMode::Off); // Disable autosave
+    ///
+    /// client.scan_props_set(builder)?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn scan_props_set(&mut self, builder: ScanPropsBuilder) -> Result<(), NanonisError> {
+        // Convert boolean options to u32 (0=no change, 1=On, 2=Off)
+        let continuous_flag = match builder.continuous_scan {
+            None => 0u32,
+            Some(true) => 1u32,
+            Some(false) => 2u32,
+        };
+
+        let bouncy_flag = match builder.bouncy_scan {
+            None => 0u32,
+            Some(true) => 1u32,
+            Some(false) => 2u32,
+        };
+
+        let autosave_flag = match builder.autosave {
+            None => 0u32,
+            Some(mode) => mode.into(),
+        };
+
+        let autopaste_flag = match builder.autopaste {
+            None => 0u32,
+            Some(mode) => mode.into(),
+        };
+
+        // For strings/arrays: empty string/array means no change
+        let series_name = builder.series_name.unwrap_or_default();
+        let comment = builder.comment.unwrap_or_default();
+        let modules_names = builder.modules_names.unwrap_or_default();
+
+        self.quick_send(
+            "Scan.PropsSet",
+            vec![
+                NanonisValue::U32(continuous_flag),
+                NanonisValue::U32(bouncy_flag),
+                NanonisValue::U32(autosave_flag),
+                NanonisValue::String(series_name),
+                NanonisValue::String(comment),
+                NanonisValue::ArrayString(modules_names),
+                NanonisValue::U32(autopaste_flag),
+            ],
+            vec!["I", "I", "I", "+*c", "+*c", "+*c", "I"],
+            vec![],
+        )?;
+
+        Ok(())
     }
 }

@@ -1,6 +1,8 @@
-use super::NanonisClient;
+use super::super::NanonisClient;
+use super::*;
 use crate::error::NanonisError;
-use crate::types::{NanonisValue, OscilloscopeIndex, SampleCount, SignalIndex, TriggerLevel, TriggerMode};
+use crate::types::NanonisValue;
+use crate::client::signals::SignalIndex;
 
 impl NanonisClient {
     /// Set the measured signal index of the selected channel from the Oscilloscope High Resolution

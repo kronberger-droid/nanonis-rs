@@ -4,63 +4,58 @@ pub mod protocol;
 pub mod tcplogger_stream;
 pub mod types;
 
-// Re-export error types
+// Core types (root level)
 pub use error::NanonisError;
-
-// Re-export the main types from client
-pub use client::{
-    ConnectionConfig, NanonisClient, NanonisClientBuilder, TipShaperConfig, TipShaperProps,
-    ZSpectroscopyResult,
-};
+pub use types::{NanonisValue, Position};
 pub use protocol::Protocol;
 pub use tcplogger_stream::TCPLoggerStream;
 
-// Re-export commonly used types
-pub use types::{
-    Amplitude,
-    // Indices
-    ChannelIndex,
-    DataToGet,
-    // Signal/Data
-    Frequency,
-    MotorAxis,
-    // Motor/Position
-    MotorDirection,
-    MotorDisplacement,
+// Client (root level)
+pub use client::{
+    NanonisClient, ConnectionConfig, NanonisClientBuilder,
+    TipShaperConfig, TipShaperProps, ZSpectroscopyResult,
+};
 
-    MotorGroup,
-    MotorMovement,
-    MovementMode,
-    // Core protocol
-    NanonisValue,
+// Re-export all domain types at root for backward compatibility
+pub use client::motor::*;
+pub use client::scan::*;
+pub use client::z_ctrl::*;
+pub use client::oscilloscope::*;
+pub use client::signals::*;
+pub use client::tcplog::*;
+pub use client::bias::*;
 
-    OsciData,
-    OsciTriggerMode,
-    OscilloscopeIndex,
+// Domain modules - users can also import from here
+pub mod motor {
+    pub use crate::client::motor::*;
+}
 
-    OversamplingIndex,
-    Position,
-    Position3D,
-    PulseMode,
+pub mod scan {
+    pub use crate::client::scan::*;
+}
 
-    SampleCount,
-    // Control/Scan
-    ScanAction,
-    ScanConfig,
-    ScanDirection,
-    ScanFrame,
-    SignalFrame,
-    SignalIndex,
-    SignalStats,
-    StepCount,
-    TCPLogStatus,
-    TCPLoggerData,
-    TimebaseIndex,
-    TriggerConfig,
+pub mod z_controller {
+    pub use crate::client::z_ctrl::*;
+}
 
-    TriggerLevel,
-    // Oscilloscope
-    TriggerMode,
-    TriggerSlope,
-    ZControllerHold,
+pub mod oscilloscope {
+    pub use crate::client::oscilloscope::*;
+}
+
+pub mod signals {
+    pub use crate::client::signals::*;
+}
+
+pub mod tcplog {
+    pub use crate::client::tcplog::*;
+}
+
+pub mod bias {
+    pub use crate::client::bias::*;
+}
+
+// Other client modules remain at root for now (less domain-specific)
+pub use client::{
+    pll, current, bias_sweep, folme, auto_approach,
+    safe_tip, tip_recovery, z_spectr,
 };
