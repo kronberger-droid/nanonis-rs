@@ -24,6 +24,7 @@ pub use client::oscilloscope::*;
 pub use client::signals::*;
 pub use client::tcplog::*;
 pub use client::bias::*;
+pub use client::user_out::*;
 
 // Domain modules - users can also import from here
 pub mod motor {
@@ -52,6 +53,10 @@ pub mod tcplog {
 
 pub mod bias {
     pub use crate::client::bias::*;
+}
+
+pub mod user_out {
+    pub use crate::client::user_out::*;
 }
 
 // Other client modules remain at root for now (less domain-specific)

@@ -19,6 +19,7 @@ pub mod scan;
 pub mod signals;
 pub mod tcplog;
 pub mod tip_recovery;
+pub mod user_out;
 pub mod util;
 pub mod z_ctrl;
 pub mod z_spectr;
