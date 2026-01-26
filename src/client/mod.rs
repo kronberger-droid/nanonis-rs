@@ -19,11 +19,13 @@ pub mod scan;
 pub mod signals;
 pub mod tcplog;
 pub mod tip_recovery;
+pub mod util;
 pub mod z_ctrl;
 pub mod z_spectr;
 
 // Re-export types from submodules
 pub use tip_recovery::{TipShaperConfig, TipShaperProps};
+pub use util::VersionInfo;
 pub use z_spectr::ZSpectroscopyResult;
 
 /// Connection configuration for the Nanonis TCP client.

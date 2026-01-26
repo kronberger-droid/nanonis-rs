@@ -13,7 +13,7 @@ pub use tcplogger_stream::TCPLoggerStream;
 // Client (root level)
 pub use client::{
     NanonisClient, ConnectionConfig, NanonisClientBuilder,
-    TipShaperConfig, TipShaperProps, ZSpectroscopyResult,
+    TipShaperConfig, TipShaperProps, VersionInfo, ZSpectroscopyResult,
 };
 
 // Re-export all domain types at root for backward compatibility
@@ -57,5 +57,5 @@ pub mod bias {
 // Other client modules remain at root for now (less domain-specific)
 pub use client::{
     pll, current, bias_sweep, folme, auto_approach,
-    safe_tip, tip_recovery, z_spectr,
+    safe_tip, tip_recovery, util, z_spectr,
 };
