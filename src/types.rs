@@ -92,7 +92,7 @@ impl TryFrom<NanonisValue> for f32 {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::F32(v) => Ok(v),
-            _ => Err(NanonisError::Type(format!("Expected f32, got {value:?}"))),
+            _ => Err(NanonisError::Protocol(format!("Expected f32, got {value:?}"))),
         }
     }
 }
@@ -103,7 +103,7 @@ impl TryFrom<NanonisValue> for f64 {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::F64(v) => Ok(v),
-            _ => Err(NanonisError::Type(format!("Expected f64, got {value:?}"))),
+            _ => Err(NanonisError::Protocol(format!("Expected f64, got {value:?}"))),
         }
     }
 }
@@ -114,7 +114,7 @@ impl TryFrom<NanonisValue> for u16 {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::U16(v) => Ok(v),
-            _ => Err(NanonisError::Type(format!("Expected u16, got {value:?}"))),
+            _ => Err(NanonisError::Protocol(format!("Expected u16, got {value:?}"))),
         }
     }
 }
@@ -125,7 +125,7 @@ impl TryFrom<NanonisValue> for u32 {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::U32(v) => Ok(v),
-            _ => Err(NanonisError::Type(format!("Expected u32, got {value:?}"))),
+            _ => Err(NanonisError::Protocol(format!("Expected u32, got {value:?}"))),
         }
     }
 }
@@ -136,7 +136,7 @@ impl TryFrom<NanonisValue> for i16 {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::I16(v) => Ok(v),
-            _ => Err(NanonisError::Type(format!("Expected i16, got {value:?}"))),
+            _ => Err(NanonisError::Protocol(format!("Expected i16, got {value:?}"))),
         }
     }
 }
@@ -147,7 +147,7 @@ impl TryFrom<NanonisValue> for i32 {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::I32(v) => Ok(v),
-            _ => Err(NanonisError::Type(format!("Expected i32, got {value:?}"))),
+            _ => Err(NanonisError::Protocol(format!("Expected i32, got {value:?}"))),
         }
     }
 }
@@ -158,7 +158,7 @@ impl TryFrom<NanonisValue> for Vec<f32> {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::ArrayF32(v) => Ok(v),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Expected Vec<f32>, got {value:?}"
             ))),
         }
@@ -171,7 +171,7 @@ impl TryFrom<NanonisValue> for Vec<String> {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::ArrayString(v) => Ok(v),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Expected Vec<String>, got {value:?}"
             ))),
         }
@@ -184,7 +184,7 @@ impl TryFrom<NanonisValue> for Vec<i32> {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::ArrayI32(v) => Ok(v),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Expected Vec<i32>, got {value:?}"
             ))),
         }
@@ -196,49 +196,49 @@ impl NanonisValue {
     pub fn as_f32(&self) -> Result<f32, NanonisError> {
         match self {
             NanonisValue::F32(v) => Ok(*v),
-            _ => Err(NanonisError::Type(format!("Expected f32, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!("Expected f32, got {self:?}"))),
         }
     }
 
     pub fn as_f64(&self) -> Result<f64, NanonisError> {
         match self {
             NanonisValue::F64(v) => Ok(*v),
-            _ => Err(NanonisError::Type(format!("Expected f64, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!("Expected f64, got {self:?}"))),
         }
     }
 
     pub fn as_u16(&self) -> Result<u16, NanonisError> {
         match self {
             NanonisValue::U16(v) => Ok(*v),
-            _ => Err(NanonisError::Type(format!("Expected u16, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!("Expected u16, got {self:?}"))),
         }
     }
 
     pub fn as_u32(&self) -> Result<u32, NanonisError> {
         match self {
             NanonisValue::U32(v) => Ok(*v),
-            _ => Err(NanonisError::Type(format!("Expected u32, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!("Expected u32, got {self:?}"))),
         }
     }
 
     pub fn as_i16(&self) -> Result<i16, NanonisError> {
         match self {
             NanonisValue::I16(v) => Ok(*v),
-            _ => Err(NanonisError::Type(format!("Expected i16, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!("Expected i16, got {self:?}"))),
         }
     }
 
     pub fn as_i32(&self) -> Result<i32, NanonisError> {
         match self {
             NanonisValue::I32(v) => Ok(*v),
-            _ => Err(NanonisError::Type(format!("Expected i32, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!("Expected i32, got {self:?}"))),
         }
     }
 
     pub fn as_string_array(&self) -> Result<&[String], NanonisError> {
         match self {
             NanonisValue::ArrayString(arr) => Ok(arr),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Expected string array, got {self:?}"
             ))),
         }
@@ -247,7 +247,7 @@ impl NanonisValue {
     pub fn as_f32_array(&self) -> Result<&[f32], NanonisError> {
         match self {
             NanonisValue::ArrayF32(arr) => Ok(arr),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Expected f32 array, got {self:?}"
             ))),
         }
@@ -256,7 +256,7 @@ impl NanonisValue {
     pub fn as_f64_array(&self) -> Result<&[f64], NanonisError> {
         match self {
             NanonisValue::ArrayF64(arr) => Ok(arr),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Expected f64 array, got {self:?}"
             ))),
         }
@@ -265,7 +265,7 @@ impl NanonisValue {
     pub fn as_i32_array(&self) -> Result<&[i32], NanonisError> {
         match self {
             NanonisValue::ArrayI32(arr) => Ok(arr),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Expected i32 array, got {self:?}"
             ))),
         }
@@ -274,7 +274,7 @@ impl NanonisValue {
     pub fn as_u32_array(&self) -> Result<&[u32], NanonisError> {
         match self {
             NanonisValue::ArrayU32(arr) => Ok(arr),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Expected u32 array, got {self:?}"
             ))),
         }
@@ -283,14 +283,14 @@ impl NanonisValue {
     pub fn as_string(&self) -> Result<&str, NanonisError> {
         match self {
             NanonisValue::String(s) => Ok(s),
-            _ => Err(NanonisError::Type(format!("Expected string, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!("Expected string, got {self:?}"))),
         }
     }
 
     pub fn as_f32_2d_array(&self) -> Result<&Vec<Vec<f32>>, NanonisError> {
         match self {
             NanonisValue::Array2DF32(arr) => Ok(arr),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Expected 2D f32 array, got {self:?}"
             ))),
         }

@@ -27,7 +27,7 @@ impl TryFrom<u16> for PISlope {
         match value {
             0 => Ok(PISlope::Positive),
             1 => Ok(PISlope::Negative),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid PISlope value: {}",
                 value
             ))),

@@ -29,7 +29,7 @@ impl TCPLoggerStream {
     pub fn new(addr: &str, stream_port: u16) -> Result<Self, NanonisError> {
         let socket_addr: SocketAddr = format!("{addr}:{stream_port}")
             .parse()
-            .map_err(|_| NanonisError::InvalidAddress(addr.to_string()))?;
+            .map_err(|_| NanonisError::Protocol(format!("Invalid address: {addr}")))?;
 
         let stream = TcpStream::connect(socket_addr).map_err(|e| NanonisError::Io {
             source: e,

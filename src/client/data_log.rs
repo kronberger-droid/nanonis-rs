@@ -27,7 +27,7 @@ impl TryFrom<u16> for DataLogAcqMode {
         match value {
             0 => Ok(DataLogAcqMode::Continuous),
             1 => Ok(DataLogAcqMode::Timed),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid DataLogAcqMode value: {}",
                 value
             ))),

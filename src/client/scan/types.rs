@@ -51,7 +51,7 @@ impl TryFrom<u16> for ScanAction {
             4 => Ok(ScanAction::Freeze),
             5 => Ok(ScanAction::Unfreeze),
             6 => Ok(ScanAction::GoToCenter),
-            _ => Err(NanonisError::InvalidCommand(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid scan action: {}",
                 value
             ))),
@@ -78,7 +78,7 @@ impl TryFrom<u32> for ScanDirection {
         match value {
             0 => Ok(ScanDirection::Down),
             1 => Ok(ScanDirection::Up),
-            _ => Err(NanonisError::InvalidCommand(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid scan direction: {}",
                 value
             ))),

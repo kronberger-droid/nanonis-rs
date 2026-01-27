@@ -71,6 +71,9 @@ pub use error::NanonisError;
 pub use client::{NanonisClient, NanonisClientBuilder, ConnectionConfig};
 pub use tcplogger_stream::TCPLoggerStream;
 
+// Re-export commonly used types from the internal types module
+pub use types::{NanonisValue, Position};
+
 // ==================== Domain Type Modules ====================
 //
 // Import types from these modules as needed.

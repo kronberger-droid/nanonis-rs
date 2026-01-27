@@ -89,7 +89,7 @@ impl Protocol {
 
             let trimmed_msg = error_msg.trim();
             if !trimmed_msg.is_empty() {
-                return Err(NanonisError::ServerError {
+                return Err(NanonisError::Server {
                     code: error_status,
                     message: trimmed_msg.to_string(),
                 });
@@ -345,7 +345,7 @@ impl Protocol {
                 }
 
                 _ => {
-                    return Err(NanonisError::Type(format!(
+                    return Err(NanonisError::Protocol(format!(
                         "Unsupported response type: {response_type}"
                     )));
                 }
@@ -445,7 +445,7 @@ impl Protocol {
             }
 
             _ => {
-                return Err(NanonisError::Type(format!(
+                return Err(NanonisError::Protocol(format!(
                     "Unsupported type combination: {value:?} with {body_type}"
                 )))
             }
@@ -703,7 +703,7 @@ impl Protocol {
                 }
 
                 _ => {
-                    return Err(NanonisError::Type(format!(
+                    return Err(NanonisError::Protocol(format!(
                         "Unsupported response type: {response_type}"
                     )))
                 }
@@ -739,10 +739,9 @@ impl Protocol {
         if received_command == expected_command {
             Ok(response_body_size)
         } else {
-            Err(NanonisError::CommandMismatch {
-                expected: expected_command.to_string(),
-                actual: received_command,
-            })
+            Err(NanonisError::Protocol(format!(
+                "Command mismatch: expected {expected_command}, got {received_command}"
+            )))
         }
     }
 }

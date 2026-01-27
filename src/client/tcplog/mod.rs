@@ -97,7 +97,7 @@ impl NanonisClient {
     pub fn tcplog_chs_set(&mut self, channel_indexes: Vec<i32>) -> Result<(), NanonisError> {
         for &index in &channel_indexes {
             if !(0..=23).contains(&index) {
-                return Err(NanonisError::InvalidCommand(
+                return Err(NanonisError::Protocol(
                     format!("Invalid signal slot index: {}. Must be between 0-23 (signal slots, not full signal indices)", index)
                 ));
             }
@@ -147,7 +147,7 @@ impl NanonisClient {
     /// ```
     pub fn tcplog_oversampl_set(&mut self, oversampling_value: i32) -> Result<(), NanonisError> {
         if !(0..=1000).contains(&oversampling_value) {
-            return Err(NanonisError::InvalidCommand(format!(
+            return Err(NanonisError::Protocol(format!(
                 "Invalid oversampling value: {}. Must be between 0-1000",
                 oversampling_value
             )));

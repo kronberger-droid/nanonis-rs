@@ -195,15 +195,15 @@ impl NanonisClientBuilder {
     pub fn build(self) -> Result<NanonisClient, NanonisError> {
         let address = self
             .address
-            .ok_or_else(|| NanonisError::InvalidCommand("Address must be specified".to_string()))?;
+            .ok_or_else(|| NanonisError::Protocol("Address must be specified".to_string()))?;
 
         let port = self
             .port
-            .ok_or_else(|| NanonisError::InvalidCommand("Port must be specified".to_string()))?;
+            .ok_or_else(|| NanonisError::Protocol("Port must be specified".to_string()))?;
 
         let socket_addr: SocketAddr = format!("{address}:{port}")
             .parse()
-            .map_err(|_| NanonisError::InvalidAddress(address.clone()))?;
+            .map_err(|_| NanonisError::Protocol(format!("Invalid address: {address}")))?;
 
         debug!("Connecting to Nanonis at {address}");
 
@@ -211,7 +211,7 @@ impl NanonisClientBuilder {
             .map_err(|e| {
                 warn!("Failed to connect to {address}: {e}");
                 if e.kind() == std::io::ErrorKind::TimedOut {
-                    NanonisError::Timeout
+                    NanonisError::Timeout(format!("Connection to {address} timed out"))
                 } else {
                     NanonisError::Io {
                         source: e,

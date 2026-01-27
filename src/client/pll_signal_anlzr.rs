@@ -28,7 +28,7 @@ impl TryFrom<u16> for PLLTriggerMode {
             0 => Ok(PLLTriggerMode::NoChange),
             1 => Ok(PLLTriggerMode::Immediate),
             2 => Ok(PLLTriggerMode::Level),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid PLLTriggerMode value: {}",
                 value
             ))),
@@ -62,7 +62,7 @@ impl TryFrom<u16> for PLLTriggerSlope {
             0 => Ok(PLLTriggerSlope::NoChange),
             1 => Ok(PLLTriggerSlope::Rising),
             2 => Ok(PLLTriggerSlope::Falling),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid PLLTriggerSlope value: {}",
                 value
             ))),
@@ -96,7 +96,7 @@ impl TryFrom<u16> for ArmingMode {
             0 => Ok(ArmingMode::NoChange),
             1 => Ok(ArmingMode::Manual),
             2 => Ok(ArmingMode::Automatic),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid ArmingMode value: {}",
                 value
             ))),

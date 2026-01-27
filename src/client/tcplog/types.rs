@@ -74,7 +74,7 @@ impl TryFrom<i32> for TCPLogStatus {
             5 => Ok(TCPLogStatus::TCPConnect),
             6 => Ok(TCPLogStatus::TCPDisconnect),
             7 => Ok(TCPLogStatus::BufferOverflow),
-            _ => Err(NanonisError::InvalidCommand(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid TCP Logger status: {}",
                 value
             ))),

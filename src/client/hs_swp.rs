@@ -25,7 +25,7 @@ impl TryFrom<i32> for ReverseCondition {
         match value {
             0 => Ok(ReverseCondition::GreaterThan),
             1 => Ok(ReverseCondition::LessThan),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid ReverseCondition value: {}",
                 value
             ))),
@@ -62,7 +62,7 @@ impl TryFrom<i32> for ConditionLinkage {
             1 => Ok(ConditionLinkage::Or),
             2 => Ok(ConditionLinkage::And),
             3 => Ok(ConditionLinkage::Then),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid ConditionLinkage value: {}",
                 value
             ))),

@@ -72,7 +72,7 @@ impl TryFrom<u16> for TriggerSlope {
         match value {
             0 => Ok(TriggerSlope::Falling),
             1 => Ok(TriggerSlope::Rising),
-            _ => Err(NanonisError::InvalidCommand(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid trigger slope: {}",
                 value
             ))),
@@ -155,7 +155,7 @@ impl TryFrom<u16> for OsciTriggerMode {
             0 => Ok(OsciTriggerMode::Immediate),
             1 => Ok(OsciTriggerMode::Level),
             2 => Ok(OsciTriggerMode::Auto),
-            _ => Err(NanonisError::InvalidCommand(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid oscilloscope trigger mode: {}",
                 value
             ))),
@@ -190,7 +190,7 @@ impl TryFrom<u16> for OversamplingIndex {
             3 => Ok(OversamplingIndex::Samples5),
             4 => Ok(OversamplingIndex::Samples2),
             5 => Ok(OversamplingIndex::Samples1),
-            _ => Err(NanonisError::InvalidCommand(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid oversampling index: {}",
                 value
             ))),

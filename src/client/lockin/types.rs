@@ -23,7 +23,7 @@ impl TryFrom<u32> for RTSignalMode {
         match value {
             0 => Ok(RTSignalMode::XY),
             1 => Ok(RTSignalMode::RPhi),
-            _ => Err(crate::error::NanonisError::Type(format!(
+            _ => Err(crate::error::NanonisError::Protocol(format!(
                 "Invalid RTSignalMode value: {}",
                 value
             ))),

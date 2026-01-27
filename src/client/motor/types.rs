@@ -29,7 +29,7 @@ impl TryFrom<u32> for MotorDirection {
             3 => Ok(MotorDirection::YMinus),
             4 => Ok(MotorDirection::ZPlus),
             5 => Ok(MotorDirection::ZMinus),
-            _ => Err(NanonisError::InvalidCommand(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid motor direction: {}",
                 value
             ))),
@@ -64,7 +64,7 @@ impl TryFrom<u32> for MotorGroup {
             3 => Ok(MotorGroup::Group4),
             4 => Ok(MotorGroup::Group5),
             5 => Ok(MotorGroup::Group6),
-            _ => Err(NanonisError::InvalidCommand(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid motor group: {}",
                 value
             ))),
@@ -215,7 +215,7 @@ impl TryFrom<u32> for MovementMode {
         match value {
             0 => Ok(MovementMode::Relative),
             1 => Ok(MovementMode::Absolute),
-            _ => Err(NanonisError::InvalidCommand(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid movement mode: {}",
                 value
             ))),

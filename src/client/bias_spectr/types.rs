@@ -32,7 +32,7 @@ impl TryFrom<u16> for DigitalSync {
             0 => Ok(DigitalSync::Off),
             1 => Ok(DigitalSync::TTLSync),
             2 => Ok(DigitalSync::PulseSequence),
-            _ => Err(crate::error::NanonisError::Type(format!(
+            _ => Err(crate::error::NanonisError::Protocol(format!(
                 "Invalid DigitalSync value: {}",
                 value
             ))),
@@ -71,7 +71,7 @@ impl TryFrom<u16> for TTLLine {
             1 => Ok(TTLLine::HSLine2),
             2 => Ok(TTLLine::HSLine3),
             3 => Ok(TTLLine::HSLine4),
-            _ => Err(crate::error::NanonisError::Type(format!(
+            _ => Err(crate::error::NanonisError::Protocol(format!(
                 "Invalid TTLLine value: {}",
                 value
             ))),
@@ -104,7 +104,7 @@ impl TryFrom<u16> for TTLPolarity {
         match value {
             0 => Ok(TTLPolarity::LowActive),
             1 => Ok(TTLPolarity::HighActive),
-            _ => Err(crate::error::NanonisError::Type(format!(
+            _ => Err(crate::error::NanonisError::Protocol(format!(
                 "Invalid TTLPolarity value: {}",
                 value
             ))),
@@ -137,7 +137,7 @@ impl TryFrom<u16> for OptionalFlag {
         match value {
             0 => Ok(OptionalFlag::Off),
             1 => Ok(OptionalFlag::On),
-            _ => Err(crate::error::NanonisError::Type(format!(
+            _ => Err(crate::error::NanonisError::Protocol(format!(
                 "Invalid OptionalFlag value: {}",
                 value
             ))),
@@ -162,7 +162,7 @@ impl TryFrom<&str> for SweepMode {
         match value.to_lowercase().as_str() {
             "linear" => Ok(SweepMode::Linear),
             "mls" => Ok(SweepMode::MLS),
-            _ => Err(crate::error::NanonisError::Type(format!(
+            _ => Err(crate::error::NanonisError::Protocol(format!(
                 "Invalid SweepMode: {}",
                 value
             ))),

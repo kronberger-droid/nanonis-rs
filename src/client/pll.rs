@@ -34,7 +34,7 @@ impl TryFrom<u16> for PLLExcRange {
             2 => Ok(PLLExcRange::V01),
             3 => Ok(PLLExcRange::V001),
             4 => Ok(PLLExcRange::V0001),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid PLLExcRange value: {}",
                 value
             ))),
@@ -533,7 +533,7 @@ impl NanonisClient {
 
         match response.first() {
             Some(NanonisValue::F32(setpoint)) => Ok(*setpoint),
-            _ => Err(NanonisError::SerializationError(
+            _ => Err(NanonisError::Protocol(
                 "Expected f32 amplitude setpoint".to_string(),
             )),
         }
@@ -628,7 +628,7 @@ impl NanonisClient {
 
         match response.first() {
             Some(NanonisValue::U32(status)) => Ok(*status != 0),
-            _ => Err(NanonisError::InvalidResponse(
+            _ => Err(NanonisError::Protocol(
                 "Expected u32 amplitude controller status".to_string(),
             )),
         }

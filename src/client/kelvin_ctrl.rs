@@ -27,7 +27,7 @@ impl TryFrom<u16> for KelvinSlope {
         match value {
             0 => Ok(KelvinSlope::Negative),
             1 => Ok(KelvinSlope::Positive),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid KelvinSlope value: {}",
                 value
             ))),

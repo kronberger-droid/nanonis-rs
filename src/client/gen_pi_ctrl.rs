@@ -27,7 +27,7 @@ impl TryFrom<u16> for GenPISlope {
         match value {
             0 => Ok(GenPISlope::Negative),
             1 => Ok(GenPISlope::Positive),
-            _ => Err(NanonisError::Type(format!(
+            _ => Err(NanonisError::Protocol(format!(
                 "Invalid GenPISlope value: {}",
                 value
             ))),
