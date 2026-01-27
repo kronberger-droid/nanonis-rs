@@ -42,14 +42,10 @@ nanonis-rs = "0.0.3"
 
 ```rust
 use nanonis_rs::{NanonisClient, NanonisError};
-use std::time::Duration;
 
 fn main() -> Result<(), NanonisError> {
     // Connect to Nanonis system
-    let mut client = NanonisClient::builder()
-        .address("192.168.1.100:6501")
-        .timeout(Duration::from_secs(5))
-        .build()?;
+    let mut client = NanonisClient::new("192.168.1.100", 6501)?;
 
     // Get current bias voltage
     let bias = client.bias_get()?;
@@ -58,9 +54,13 @@ fn main() -> Result<(), NanonisError> {
     // Set new bias voltage
     client.bias_set(0.5)?;
 
-    // Read signal values
-    let signals = client.signals_vals_get()?;
-    println!("Signals: {:?}", signals);
+    // Read signal names
+    let signal_names = client.signal_names_get()?;
+    println!("Available signals: {:?}", signal_names);
+
+    // Read specific signal values (indices 0, 1, 2)
+    let values = client.signals_vals_get(vec![0, 1, 2], true)?;
+    println!("Signal values: {:?}", values);
 
     Ok(())
 }
@@ -69,16 +69,16 @@ fn main() -> Result<(), NanonisError> {
 ### Motor Control Example
 
 ```rust
-use nanonis_rs::{NanonisClient, MotorDirection, MotorGroup};
+use nanonis_rs::{NanonisClient, NanonisError, MotorDirection, MotorGroup};
 use std::time::Duration;
 
 fn main() -> Result<(), NanonisError> {
-    let mut client = NanonisClient::connect("192.168.1.100:6501")?;
+    let mut client = NanonisClient::new("192.168.1.100", 6501)?;
 
     // Move motor with specified steps
     client.motor_start_move(
         MotorDirection::ZPlus,
-        1000,  // steps
+        1000u16,  // steps
         MotorGroup::Group1,
         false  // non-blocking
     )?;
@@ -129,25 +129,34 @@ use nanonis_rs::NanonisClient;
 use std::time::Duration;
 
 let client = NanonisClient::builder()
-    .address("192.168.1.100:6501")
-    .timeout(Duration::from_secs(10))
-    .max_response_size(100_000_000)  // 100 MB
+    .address("192.168.1.100")
+    .port(6501)
+    .connect_timeout(Duration::from_secs(10))
+    .read_timeout(Duration::from_secs(30))
     .build()?;
 ```
 
-Or use the simpler connect method:
+Or use the simpler constructor:
 
 ```rust
-let client = NanonisClient::connect("192.168.1.100:6501")?;
+let client = NanonisClient::new("192.168.1.100", 6501)?;
 ```
 
 ## Safety Features
 
-The client implements automatic safety features:
+The client includes optional safety features:
 
-- **Auto-withdrawal**: Z-controller withdraws tip when client is dropped
-- **Motor positioning**: Motors automatically move to safe position on drop
 - **Timeout protection**: All operations have configurable timeouts
+- **Optional auto-withdrawal**: Enable `safe_tip_on_drop` to automatically withdraw the tip and move motors to a safe position when the client is dropped
+
+```rust
+// Enable automatic tip safety on drop (opt-in)
+let client = NanonisClient::builder()
+    .address("192.168.1.100")
+    .port(6501)
+    .safe_tip_on_drop(true)  // Will withdraw tip when client drops
+    .build()?;
+```
 
 ## Error Handling
 
@@ -156,8 +165,8 @@ The library uses typed errors via `NanonisError`:
 ```rust
 match client.bias_get() {
     Ok(bias) => println!("Bias: {} V", bias),
-    Err(NanonisError::Timeout(msg)) => eprintln!("Timeout: {}", msg),
-    Err(NanonisError::Server { code, message }) => {
+    Err(NanonisError::Timeout) => eprintln!("Connection timeout"),
+    Err(NanonisError::ServerError { code, message }) => {
         eprintln!("Server error {}: {}", code, message)
     }
     Err(e) => eprintln!("Error: {}", e),

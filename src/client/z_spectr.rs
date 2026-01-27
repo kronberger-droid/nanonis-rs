@@ -530,4 +530,357 @@ impl NanonisClient {
             ))
         }
     }
+
+    /// Set the Z spectroscopy properties.
+    ///
+    /// # Arguments
+    /// * `backward_sweep` - 0=no change, 1=enable backward sweep, 2=disable
+    /// * `num_points` - Number of points (0=no change)
+    /// * `num_sweeps` - Number of sweeps to average (0=no change)
+    /// * `autosave` - 0=no change, 1=enable autosave, 2=disable
+    /// * `show_save_dialog` - 0=no change, 1=show dialog, 2=don't show
+    /// * `save_all` - 0=no change, 1=save individual sweeps, 2=don't save
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_spectr_props_set(
+        &mut self,
+        backward_sweep: u16,
+        num_points: i32,
+        num_sweeps: u16,
+        autosave: u16,
+        show_save_dialog: u16,
+        save_all: u16,
+    ) -> Result<(), NanonisError> {
+        self.quick_send(
+            "ZSpectr.PropsSet",
+            vec![
+                NanonisValue::U16(backward_sweep),
+                NanonisValue::I32(num_points),
+                NanonisValue::U16(num_sweeps),
+                NanonisValue::U16(autosave),
+                NanonisValue::U16(show_save_dialog),
+                NanonisValue::U16(save_all),
+            ],
+            vec!["H", "i", "H", "H", "H", "H"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the Z spectroscopy properties.
+    ///
+    /// Returns the current property configuration.
+    ///
+    /// # Returns
+    /// A tuple containing:
+    /// - `bool` - Backward sweep enabled
+    /// - `i32` - Number of points
+    /// - `u16` - Number of sweeps to average
+    /// - `bool` - Autosave enabled
+    /// - `bool` - Show save dialog
+    /// - `bool` - Save all individual sweeps
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use nanonis_rs::NanonisClient;
+    ///
+    /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
+    ///
+    /// let (backward, points, sweeps, autosave, dialog, save_all) =
+    ///     client.z_spectr_props_get()?;
+    /// println!("Points: {}, Sweeps: {}, Backward: {}", points, sweeps, backward);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn z_spectr_props_get(
+        &mut self,
+    ) -> Result<(bool, i32, u16, bool, bool, bool), NanonisError> {
+        let result = self.quick_send(
+            "ZSpectr.PropsGet",
+            vec![],
+            vec![],
+            vec!["H", "i", "H", "I", "I", "I"],
+        )?;
+
+        if result.len() >= 6 {
+            Ok((
+                result[0].as_u16()? != 0,
+                result[1].as_i32()?,
+                result[2].as_u16()?,
+                result[3].as_u32()? != 0,
+                result[4].as_u32()? != 0,
+                result[5].as_u32()? != 0,
+            ))
+        } else {
+            Err(NanonisError::Protocol(
+                "Invalid Z spectroscopy props response".to_string(),
+            ))
+        }
+    }
+
+    /// Set the advanced Z spectroscopy properties.
+    ///
+    /// # Arguments
+    /// * `time_between_sweeps_s` - Time between forward and backward sweep
+    /// * `record_final_z` - 0=no change, 1=on, 2=off
+    /// * `lockin_run` - 0=no change, 1=on, 2=off
+    /// * `reset_z` - 0=no change, 1=on, 2=off
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_spectr_adv_props_set(
+        &mut self,
+        time_between_sweeps_s: f32,
+        record_final_z: u16,
+        lockin_run: u16,
+        reset_z: u16,
+    ) -> Result<(), NanonisError> {
+        self.quick_send(
+            "ZSpectr.AdvPropsSet",
+            vec![
+                NanonisValue::F32(time_between_sweeps_s),
+                NanonisValue::U16(record_final_z),
+                NanonisValue::U16(lockin_run),
+                NanonisValue::U16(reset_z),
+            ],
+            vec!["f", "H", "H", "H"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the advanced Z spectroscopy properties.
+    ///
+    /// # Returns
+    /// Tuple of (time_between_sweeps, record_final_z, lockin_run, reset_z).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_spectr_adv_props_get(&mut self) -> Result<(f32, bool, bool, bool), NanonisError> {
+        let result = self.quick_send(
+            "ZSpectr.AdvPropsGet",
+            vec![],
+            vec![],
+            vec!["f", "H", "H", "H"],
+        )?;
+
+        Ok((
+            result[0].as_f32()?,
+            result[1].as_u16()? != 0,
+            result[2].as_u16()? != 0,
+            result[3].as_u16()? != 0,
+        ))
+    }
+
+    /// Set the retract delay.
+    ///
+    /// # Arguments
+    /// * `delay_s` - Delay in seconds between forward and backward sweep
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_spectr_retract_delay_set(&mut self, delay_s: f32) -> Result<(), NanonisError> {
+        self.quick_send(
+            "ZSpectr.RetractDelaySet",
+            vec![NanonisValue::F32(delay_s)],
+            vec!["f"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the retract delay.
+    ///
+    /// # Returns
+    /// Delay in seconds.
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_spectr_retract_delay_get(&mut self) -> Result<f32, NanonisError> {
+        let result = self.quick_send("ZSpectr.RetractDelayGet", vec![], vec![], vec!["f"])?;
+        result[0].as_f32()
+    }
+
+    /// Set the second retraction condition.
+    ///
+    /// # Arguments
+    /// * `condition` - 0=no change, 1=disabled, 2=OR, 3=AND, 4=THEN
+    /// * `threshold` - Threshold value
+    /// * `signal_index` - Signal index (0-127, -1 for no change)
+    /// * `comparison` - 0=greater than, 1=less than, 2=no change
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_spectr_retract_second_set(
+        &mut self,
+        condition: i32,
+        threshold: f32,
+        signal_index: i32,
+        comparison: u16,
+    ) -> Result<(), NanonisError> {
+        self.quick_send(
+            "ZSpectr.RetractSecondSet",
+            vec![
+                NanonisValue::I32(condition),
+                NanonisValue::F32(threshold),
+                NanonisValue::I32(signal_index),
+                NanonisValue::U16(comparison),
+            ],
+            vec!["i", "f", "i", "H"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the second retraction condition.
+    ///
+    /// # Returns
+    /// Tuple of (condition, threshold, signal_index, comparison).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_spectr_retract_second_get(&mut self) -> Result<(i32, f32, i32, u16), NanonisError> {
+        let result = self.quick_send(
+            "ZSpectr.RetractSecondGet",
+            vec![],
+            vec![],
+            vec!["i", "f", "i", "H"],
+        )?;
+
+        Ok((
+            result[0].as_i32()?,
+            result[1].as_f32()?,
+            result[2].as_i32()?,
+            result[3].as_u16()?,
+        ))
+    }
+
+    /// Set the digital synchronization mode.
+    ///
+    /// # Arguments
+    /// * `dig_sync` - 0=no change, 1=off, 2=TTL sync, 3=pulse sequence
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_spectr_dig_sync_set(&mut self, dig_sync: u16) -> Result<(), NanonisError> {
+        self.quick_send(
+            "ZSpectr.DigSyncSet",
+            vec![NanonisValue::U16(dig_sync)],
+            vec!["H"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the digital synchronization mode.
+    ///
+    /// # Returns
+    /// Sync mode (0=off, 1=TTL sync, 2=pulse sequence).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_spectr_dig_sync_get(&mut self) -> Result<u16, NanonisError> {
+        let result = self.quick_send("ZSpectr.DigSyncGet", vec![], vec![], vec!["H"])?;
+        result[0].as_u16()
+    }
+
+    /// Set the TTL synchronization parameters.
+    ///
+    /// # Arguments
+    /// * `ttl_line` - 0=no change, 1-4=HS line number
+    /// * `polarity` - 0=no change, 1=low active, 2=high active
+    /// * `time_to_on_s` - Time to wait before activation
+    /// * `on_duration_s` - Duration of activation
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_spectr_ttl_sync_set(
+        &mut self,
+        ttl_line: u16,
+        polarity: u16,
+        time_to_on_s: f32,
+        on_duration_s: f32,
+    ) -> Result<(), NanonisError> {
+        self.quick_send(
+            "ZSpectr.TTLSyncSet",
+            vec![
+                NanonisValue::U16(ttl_line),
+                NanonisValue::U16(polarity),
+                NanonisValue::F32(time_to_on_s),
+                NanonisValue::F32(on_duration_s),
+            ],
+            vec!["H", "H", "f", "f"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the TTL synchronization parameters.
+    ///
+    /// # Returns
+    /// Tuple of (ttl_line, polarity, time_to_on_s, on_duration_s).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_spectr_ttl_sync_get(&mut self) -> Result<(u16, u16, f32, f32), NanonisError> {
+        let result = self.quick_send(
+            "ZSpectr.TTLSyncGet",
+            vec![],
+            vec![],
+            vec!["H", "H", "f", "f"],
+        )?;
+
+        Ok((
+            result[0].as_u16()?,
+            result[1].as_u16()?,
+            result[2].as_f32()?,
+            result[3].as_f32()?,
+        ))
+    }
+
+    /// Set the pulse sequence synchronization.
+    ///
+    /// # Arguments
+    /// * `pulse_seq_nr` - Pulse sequence number (0=no change)
+    /// * `num_periods` - Number of periods
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_spectr_pulse_seq_sync_set(
+        &mut self,
+        pulse_seq_nr: u16,
+        num_periods: u32,
+    ) -> Result<(), NanonisError> {
+        self.quick_send(
+            "ZSpectr.PulseSeqSyncSet",
+            vec![
+                NanonisValue::U16(pulse_seq_nr),
+                NanonisValue::U32(num_periods),
+            ],
+            vec!["H", "I"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the pulse sequence synchronization.
+    ///
+    /// # Returns
+    /// Tuple of (pulse_seq_nr, num_periods).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_spectr_pulse_seq_sync_get(&mut self) -> Result<(u16, u32), NanonisError> {
+        let result = self.quick_send(
+            "ZSpectr.PulseSeqSyncGet",
+            vec![],
+            vec![],
+            vec!["H", "I"],
+        )?;
+
+        Ok((result[0].as_u16()?, result[1].as_u32()?))
+    }
 }

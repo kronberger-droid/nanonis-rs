@@ -21,18 +21,18 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::{NanonisClient };
+    /// use nanonis_rs::NanonisClient;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
     /// // Set bias to 1.5V
-    /// client.set_bias(1.5)?;
+    /// client.bias_set(1.5)?;
     ///
-    /// // Set bias to -0.5V   
-    /// client.set_bias(-0.5)?;
+    /// // Set bias to -0.5V
+    /// client.bias_set(-0.5)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn set_bias(&mut self, voltage: f32) -> Result<(), NanonisError> {
+    pub fn bias_set(&mut self, voltage: f32) -> Result<(), NanonisError> {
         self.quick_send(
             "Bias.Set",
             vec![NanonisValue::F32(voltage)],
@@ -47,7 +47,7 @@ impl NanonisClient {
     /// This corresponds to the Nanonis `Bias.Get` command.
     ///
     /// # Returns
-    /// The current bias voltage
+    /// The current bias voltage in volts.
     ///
     /// # Errors
     /// Returns `NanonisError` if:
@@ -60,11 +60,11 @@ impl NanonisClient {
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
-    /// let current_bias = client.get_bias()?;
+    /// let current_bias = client.bias_get()?;
     /// println!("Current bias voltage: {:.3}V", current_bias);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn get_bias(&mut self) -> Result<f32, NanonisError> {
+    pub fn bias_get(&mut self) -> Result<f32, NanonisError> {
         let result = self.quick_send("Bias.Get", vec![], vec![], vec!["f"])?;
         match result.first() {
             Some(value) => Ok(value.as_f32()?),

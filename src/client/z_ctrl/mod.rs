@@ -396,4 +396,219 @@ impl NanonisClient {
         )?;
         Ok(())
     }
+
+    /// Set the Z-Controller switch-off delay.
+    ///
+    /// Before turning off the controller, the Z position is averaged over this delay.
+    /// This leads to reproducible Z positions when switching off the controller.
+    ///
+    /// # Arguments
+    /// * `delay_s` - Switch-off delay in seconds
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_ctrl_switch_off_delay_set(&mut self, delay_s: f32) -> Result<(), NanonisError> {
+        self.quick_send(
+            "ZCtrl.SwitchOffDelaySet",
+            vec![NanonisValue::F32(delay_s)],
+            vec!["f"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the Z-Controller switch-off delay.
+    ///
+    /// # Returns
+    /// Switch-off delay in seconds.
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_ctrl_switch_off_delay_get(&mut self) -> Result<f32, NanonisError> {
+        let result = self.quick_send("ZCtrl.SwitchOffDelayGet", vec![], vec![], vec!["f"])?;
+        result[0].as_f32()
+    }
+
+    // NOTE: z_ctrl_tip_lift_set/get are implemented in safe_tip.rs
+
+    /// Set the home position properties.
+    ///
+    /// # Arguments
+    /// * `home_mode` - Home position mode (0=no change, 1=absolute, 2=relative)
+    /// * `home_position_m` - Home position in meters
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_ctrl_home_props_set(
+        &mut self,
+        home_mode: u16,
+        home_position_m: f32,
+    ) -> Result<(), NanonisError> {
+        self.quick_send(
+            "ZCtrl.HomePropsSet",
+            vec![
+                NanonisValue::U16(home_mode),
+                NanonisValue::F32(home_position_m),
+            ],
+            vec!["H", "f"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the home position properties.
+    ///
+    /// # Returns
+    /// Tuple of (is_relative, home_position_m).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_ctrl_home_props_get(&mut self) -> Result<(bool, f32), NanonisError> {
+        let result = self.quick_send("ZCtrl.HomePropsGet", vec![], vec![], vec!["H", "f"])?;
+
+        Ok((result[0].as_u16()? != 0, result[1].as_f32()?))
+    }
+
+    /// Set the active Z-Controller.
+    ///
+    /// # Arguments
+    /// * `controller_index` - Controller index from the list
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_ctrl_active_ctrl_set(&mut self, controller_index: i32) -> Result<(), NanonisError> {
+        self.quick_send(
+            "ZCtrl.ActiveCtrlSet",
+            vec![NanonisValue::I32(controller_index)],
+            vec!["i"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the list of Z-Controllers and active controller index.
+    ///
+    /// # Returns
+    /// Tuple of (list of controller names, active controller index).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_ctrl_ctrl_list_get(&mut self) -> Result<(Vec<String>, i32), NanonisError> {
+        let result = self.quick_send(
+            "ZCtrl.CtrlListGet",
+            vec![],
+            vec![],
+            vec!["i", "i", "*+c", "i"],
+        )?;
+
+        Ok((result[2].as_string_array()?.to_vec(), result[3].as_i32()?))
+    }
+
+    /// Set the withdraw slew rate.
+    ///
+    /// # Arguments
+    /// * `rate_m_s` - Withdraw rate in m/s
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_ctrl_withdraw_rate_set(&mut self, rate_m_s: f32) -> Result<(), NanonisError> {
+        self.quick_send(
+            "ZCtrl.WithdrawRateSet",
+            vec![NanonisValue::F32(rate_m_s)],
+            vec!["f"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the withdraw slew rate.
+    ///
+    /// # Returns
+    /// Withdraw rate in m/s.
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_ctrl_withdraw_rate_get(&mut self) -> Result<f32, NanonisError> {
+        let result = self.quick_send("ZCtrl.WithdrawRateGet", vec![], vec![], vec!["f"])?;
+        result[0].as_f32()
+    }
+
+    /// Enable or disable Z position limits.
+    ///
+    /// # Arguments
+    /// * `enabled` - True to enable limits
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_ctrl_limits_enabled_set(&mut self, enabled: bool) -> Result<(), NanonisError> {
+        self.quick_send(
+            "ZCtrl.LimitsEnabledSet",
+            vec![NanonisValue::U32(if enabled { 1 } else { 0 })],
+            vec!["I"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the Z position limits enabled status.
+    ///
+    /// # Returns
+    /// True if limits are enabled.
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_ctrl_limits_enabled_get(&mut self) -> Result<bool, NanonisError> {
+        let result = self.quick_send("ZCtrl.LimitsEnabledGet", vec![], vec![], vec!["I"])?;
+        Ok(result[0].as_u32()? != 0)
+    }
+
+    /// Set the Z position limits.
+    ///
+    /// # Arguments
+    /// * `high_limit_m` - High Z limit in meters
+    /// * `low_limit_m` - Low Z limit in meters
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_ctrl_limits_set(
+        &mut self,
+        high_limit_m: f32,
+        low_limit_m: f32,
+    ) -> Result<(), NanonisError> {
+        self.quick_send(
+            "ZCtrl.LimitsSet",
+            vec![
+                NanonisValue::F32(high_limit_m),
+                NanonisValue::F32(low_limit_m),
+            ],
+            vec!["f", "f"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the Z position limits.
+    ///
+    /// # Returns
+    /// Tuple of (high_limit_m, low_limit_m).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_ctrl_limits_get(&mut self) -> Result<(f32, f32), NanonisError> {
+        let result = self.quick_send("ZCtrl.LimitsGet", vec![], vec![], vec!["f", "f"])?;
+
+        Ok((result[0].as_f32()?, result[1].as_f32()?))
+    }
+
+    /// Get the current Z-Controller status.
+    ///
+    /// # Returns
+    /// Controller status (1=Off, 2=On, 3=Hold, 4=Switching Off, 5=Safe Tip, 6=Withdrawing).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn z_ctrl_status_get(&mut self) -> Result<ZControllerStatus, NanonisError> {
+        let result = self.quick_send("ZCtrl.StatusGet", vec![], vec![], vec!["H"])?;
+        ZControllerStatus::try_from(result[0].as_u16()?)
+    }
 }

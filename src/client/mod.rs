@@ -6,28 +6,50 @@ use std::io::Write;
 use std::net::{SocketAddr, TcpStream};
 use std::time::Duration;
 
+pub mod atom_track;
 pub mod auto_approach;
+pub mod beam_defl;
 pub mod bias;
+pub mod bias_spectr;
 pub mod bias_sweep;
+pub mod cpd_comp;
 pub mod current;
+pub mod data_log;
+pub mod dig_lines;
 pub mod folme;
+pub mod gen_pi_ctrl;
+pub mod gen_swp;
+pub mod hs_swp;
+pub mod interf;
+pub mod kelvin_ctrl;
+pub mod laser;
+pub mod lockin;
+pub mod lockin_freq_swp;
+pub mod marks;
 pub mod motor;
+pub mod mpass;
+pub mod oc_sync;
 pub mod oscilloscope;
+pub mod pattern;
+pub mod pi_ctrl;
+pub mod piezo;
 pub mod pll;
+pub mod pll_freq_swp;
+pub mod pll_signal_anlzr;
 pub mod safe_tip;
 pub mod scan;
+pub mod script;
+pub mod signal_chart;
 pub mod signals;
+pub mod spectrum_anlzr;
 pub mod tcplog;
 pub mod tip_recovery;
+pub mod user_in;
 pub mod user_out;
 pub mod util;
 pub mod z_ctrl;
 pub mod z_spectr;
 
-// Re-export types from submodules
-pub use tip_recovery::{TipShaperConfig, TipShaperProps};
-pub use util::VersionInfo;
-pub use z_spectr::ZSpectroscopyResult;
 
 /// Connection configuration for the Nanonis TCP client.
 ///
@@ -110,6 +132,7 @@ pub struct NanonisClientBuilder {
     port: Option<u16>,
     config: ConnectionConfig,
     debug: bool,
+    safe_tip_on_drop: bool,
 }
 
 impl NanonisClientBuilder {
@@ -153,6 +176,21 @@ impl NanonisClientBuilder {
         self
     }
 
+    /// Enable automatic tip safety on client drop.
+    ///
+    /// When enabled, the client will automatically withdraw the Z-controller
+    /// and move motors to a safe position when dropped. This is a safety feature
+    /// to protect the tip if the program exits unexpectedly.
+    ///
+    /// **Warning**: This will move hardware on every client drop, including normal
+    /// program termination. Only enable if you want this behavior.
+    ///
+    /// Default: `false` (disabled)
+    pub fn safe_tip_on_drop(mut self, enabled: bool) -> Self {
+        self.safe_tip_on_drop = enabled;
+        self
+    }
+
     /// Build the NanonisClient
     pub fn build(self) -> Result<NanonisClient, NanonisError> {
         let address = self
@@ -192,6 +230,7 @@ impl NanonisClientBuilder {
             stream,
             debug: self.debug,
             config: self.config,
+            safe_tip_on_drop: self.safe_tip_on_drop,
         })
     }
 }
@@ -229,7 +268,7 @@ impl NanonisClientBuilder {
 /// let signals = client.signal_names_get()?;
 ///
 /// // Set bias voltage
-/// client.set_bias(1.0)?;
+/// client.bias_set(1.0)?;
 ///
 /// // Read signal values
 /// let values = client.signals_vals_get(vec![0, 1, 2], true)?;
@@ -253,6 +292,7 @@ pub struct NanonisClient {
     stream: TcpStream,
     debug: bool,
     config: ConnectionConfig,
+    safe_tip_on_drop: bool,
 }
 
 impl NanonisClient {
@@ -454,8 +494,10 @@ impl NanonisClient {
 
 impl Drop for NanonisClient {
     fn drop(&mut self) {
-        use motor::{MotorDirection, MotorGroup};
-        let _ = self.z_ctrl_withdraw(false, Duration::from_secs(2));
-        let _ = self.motor_start_move(MotorDirection::ZMinus, 15u16, MotorGroup::Group1, false);
+        if self.safe_tip_on_drop {
+            use motor::{MotorDirection, MotorGroup};
+            let _ = self.z_ctrl_withdraw(false, Duration::from_secs(2));
+            let _ = self.motor_start_move(MotorDirection::ZMinus, 15u16, MotorGroup::Group1, false);
+        }
     }
 }

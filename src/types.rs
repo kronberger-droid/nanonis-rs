@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub enum NanonisValue {
+    U8(u8),
     U16(u16),
     I16(i16),
     U32(u32),
@@ -12,6 +13,7 @@ pub enum NanonisValue {
     F32(f32),
     F64(f64),
     String(String),
+    ArrayU8(Vec<u8>),
     ArrayU16(Vec<u16>),
     ArrayI16(Vec<i16>),
     ArrayU32(Vec<u32>),
@@ -265,6 +267,15 @@ impl NanonisValue {
             NanonisValue::ArrayI32(arr) => Ok(arr),
             _ => Err(NanonisError::Type(format!(
                 "Expected i32 array, got {self:?}"
+            ))),
+        }
+    }
+
+    pub fn as_u32_array(&self) -> Result<&[u32], NanonisError> {
+        match self {
+            NanonisValue::ArrayU32(arr) => Ok(arr),
+            _ => Err(NanonisError::Type(format!(
+                "Expected u32 array, got {self:?}"
             ))),
         }
     }

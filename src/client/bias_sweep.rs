@@ -42,7 +42,7 @@ impl NanonisClient {
     /// # Returns
     /// If `get_data` is true, returns a tuple containing:
     /// - `Vec<String>` - Channel names
-    /// - `Vec<Vec<f32>>` - 2D measurement data [rows][columns]
+    /// - `Vec<Vec<f32>>` - 2D measurement data `[rows][columns]`
     ///
     /// # Errors
     /// Returns `NanonisError` if communication fails or sweep cannot start.
@@ -244,6 +244,54 @@ impl NanonisClient {
         } else {
             Err(NanonisError::Protocol(
                 "Invalid bias sweep limits response".to_string(),
+            ))
+        }
+    }
+
+    /// Get the current bias sweep configuration parameters.
+    ///
+    /// Returns the current sweep configuration including number of steps,
+    /// timing, and save behavior.
+    ///
+    /// # Returns
+    /// A tuple containing:
+    /// - `u16` - Number of bias steps in the sweep
+    /// - `u16` - Period between steps in milliseconds
+    /// - `bool` - Autosave enabled
+    /// - `bool` - Save dialog box enabled
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails or protocol error occurs.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use nanonis_rs::NanonisClient;
+    ///
+    /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
+    ///
+    /// let (steps, period_ms, autosave, save_dialog) = client.bias_sweep_props_get()?;
+    /// println!("Steps: {}, Period: {}ms", steps, period_ms);
+    /// println!("Autosave: {}, Save dialog: {}", autosave, save_dialog);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn bias_sweep_props_get(&mut self) -> Result<(u16, u16, bool, bool), NanonisError> {
+        let result = self.quick_send(
+            "BiasSwp.PropsGet",
+            vec![],
+            vec![],
+            vec!["H", "H", "I", "I"],
+        )?;
+
+        if result.len() >= 4 {
+            Ok((
+                result[0].as_u16()?,
+                result[1].as_u16()?,
+                result[2].as_u32()? != 0,
+                result[3].as_u32()? != 0,
+            ))
+        } else {
+            Err(NanonisError::Protocol(
+                "Invalid bias sweep props response".to_string(),
             ))
         }
     }

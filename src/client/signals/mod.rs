@@ -319,4 +319,46 @@ impl NanonisClient {
         )?;
         Ok(())
     }
+
+    /// Get the input slot assignments for each signal.
+    ///
+    /// Returns the hardware input slot index for each signal in the system.
+    /// Input slots represent the physical or virtual input sources that feed
+    /// into each signal channel.
+    ///
+    /// # Returns
+    /// Vector of input slot indices, one for each signal in the system.
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails or protocol error occurs.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use nanonis_rs::NanonisClient;
+    ///
+    /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
+    ///
+    /// let input_slots = client.signals_in_slots_get()?;
+    /// println!("Input slot assignments for {} signals:", input_slots.len());
+    /// for (signal_idx, slot_idx) in input_slots.iter().enumerate() {
+    ///     println!("  Signal {}: Input slot {}", signal_idx, slot_idx);
+    /// }
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn signals_in_slots_get(&mut self) -> Result<Vec<i32>, NanonisError> {
+        let result = self.quick_send(
+            "Signals.InSlotsGet",
+            vec![],
+            vec![],
+            vec!["i", "*i"],
+        )?;
+
+        if result.len() >= 2 {
+            Ok(result[1].as_i32_array()?.to_vec())
+        } else {
+            Err(NanonisError::Protocol(
+                "Invalid input slots response".to_string(),
+            ))
+        }
+    }
 }

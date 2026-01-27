@@ -8,7 +8,6 @@ use std::io::Read;
 pub const COMMAND_SIZE: usize = 32;
 pub const HEADER_SIZE: usize = 40;
 pub const ERROR_INFO_SIZE: usize = 8;
-pub const MAX_RETRY_COUNT: usize = 1000;
 pub const MAX_RESPONSE_SIZE: usize = 100 * 1024 * 1024; // 100MB
 pub const RESPONSE_FLAG: u16 = 1;
 pub const ZERO_BUFFER: u16 = 0;
@@ -363,6 +362,7 @@ impl Protocol {
         buffer: &mut Vec<u8>,
     ) -> Result<(), NanonisError> {
         match (value, body_type) {
+            (NanonisValue::U8(v), "b") => buffer.push(*v),
             (NanonisValue::U16(v), "H") => buffer.write_u16::<BigEndian>(*v)?,
             (NanonisValue::I16(v), "h") => buffer.write_i16::<BigEndian>(*v)?,
             (NanonisValue::U32(v), "I") => buffer.write_u32::<BigEndian>(*v)?,
@@ -435,6 +435,13 @@ impl Protocol {
                 for &val in arr {
                     buffer.write_f64::<BigEndian>(val)?;
                 }
+            }
+
+            (NanonisValue::ArrayU8(arr), t) if t.contains("*b") => {
+                if t.starts_with("+") {
+                    buffer.write_i32::<BigEndian>(arr.len() as i32)?;
+                }
+                buffer.extend_from_slice(arr);
             }
 
             _ => {
@@ -539,6 +546,32 @@ impl Protocol {
                         arr.push(cursor.read_i32::<BigEndian>()?);
                     }
                     NanonisValue::ArrayI32(arr)
+                }
+
+                t if t.contains("*I") => {
+                    let len = if t.starts_with("+") {
+                        cursor.read_u32::<BigEndian>()? as usize
+                    } else if let Some(prev_val) = result.last() {
+                        match prev_val {
+                            NanonisValue::U32(len) => *len as usize,
+                            NanonisValue::I32(len) => *len as usize,
+                            _ => {
+                                return Err(NanonisError::Protocol(
+                                    "Array length not found".to_string(),
+                                ))
+                            }
+                        }
+                    } else {
+                        return Err(NanonisError::Protocol(
+                            "Array length not specified".to_string(),
+                        ));
+                    };
+
+                    let mut arr = Vec::with_capacity(len);
+                    for _ in 0..len {
+                        arr.push(cursor.read_u32::<BigEndian>()?);
+                    }
+                    NanonisValue::ArrayU32(arr)
                 }
 
                 // Handle string arrays with prepended length

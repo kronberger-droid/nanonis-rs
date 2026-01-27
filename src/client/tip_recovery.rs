@@ -280,7 +280,8 @@ impl NanonisClient {
     ///
     /// # Examples
     /// ```no_run
-    /// use nanonis_rs::{NanonisClient, TipShaperConfig};
+    /// use nanonis_rs::NanonisClient;
+    /// use nanonis_rs::tip_recovery::TipShaperConfig;
     /// use std::time::Duration;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;

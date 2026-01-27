@@ -688,4 +688,37 @@ impl NanonisClient {
 
         Ok(())
     }
+
+    /// Paste background image at specified location.
+    ///
+    /// Pastes a previously copied background image to the scan buffer at the
+    /// specified position. This is used for background subtraction operations.
+    ///
+    /// # Arguments
+    /// * `x` - X position in meters for paste location
+    /// * `y` - Y position in meters for paste location
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails or no background is available.
+    pub fn scan_background_paste(&mut self, x: f64, y: f64) -> Result<(), NanonisError> {
+        self.quick_send(
+            "Scan.BackgroundPaste",
+            vec![NanonisValue::F64(x), NanonisValue::F64(y)],
+            vec!["d", "d"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Delete the stored background image.
+    ///
+    /// Removes the background image from memory, freeing resources and
+    /// disabling background subtraction until a new background is captured.
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn scan_background_delete(&mut self) -> Result<(), NanonisError> {
+        self.quick_send("Scan.BackgroundDelete", vec![], vec![], vec![])?;
+        Ok(())
+    }
 }

@@ -347,4 +347,352 @@ impl NanonisClient {
             )),
         }
     }
+
+    /// Set the Digital Trigger Channel index in the Oscilloscope High Resolution.
+    ///
+    /// # Arguments
+    /// * `digital_trigger_channel` - Digital trigger channel index
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_trig_dig_ch_set(
+        &mut self,
+        digital_trigger_channel: i32,
+    ) -> Result<(), NanonisError> {
+        self.quick_send(
+            "OsciHR.TrigDigChSet",
+            vec![NanonisValue::I32(digital_trigger_channel)],
+            vec!["i"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the Digital Trigger Channel index in the Oscilloscope High Resolution.
+    ///
+    /// # Returns
+    /// Digital trigger channel index.
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_trig_dig_ch_get(&mut self) -> Result<i32, NanonisError> {
+        let result = self.quick_send("OsciHR.TrigDigChGet", vec![], vec![], vec!["i"])?;
+        match result.first() {
+            Some(value) => Ok(value.as_i32()?),
+            None => Err(NanonisError::Protocol(
+                "No digital trigger channel returned".to_string(),
+            )),
+        }
+    }
+
+    /// Set the Digital Trigger Slope in the Oscilloscope High Resolution.
+    ///
+    /// # Arguments
+    /// * `slope` - Digital trigger slope (0 = Rising, 1 = Falling, 2 = Both)
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_trig_dig_slope_set(&mut self, slope: u16) -> Result<(), NanonisError> {
+        self.quick_send(
+            "OsciHR.TrigDigSlopeSet",
+            vec![NanonisValue::U16(slope)],
+            vec!["H"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the Digital Trigger Slope in the Oscilloscope High Resolution.
+    ///
+    /// # Returns
+    /// Digital trigger slope (0 = Rising, 1 = Falling, 2 = Both).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_trig_dig_slope_get(&mut self) -> Result<u16, NanonisError> {
+        let result = self.quick_send("OsciHR.TrigDigSlopeGet", vec![], vec![], vec!["H"])?;
+        match result.first() {
+            Some(value) => Ok(value.as_u16()?),
+            None => Err(NanonisError::Protocol(
+                "No digital trigger slope returned".to_string(),
+            )),
+        }
+    }
+
+    /// Rearm the trigger in the Oscilloscope High Resolution.
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_trig_rearm(&mut self) -> Result<(), NanonisError> {
+        self.quick_send("OsciHR.TrigRearm", vec![], vec![], vec![])?;
+        Ok(())
+    }
+
+    /// Show the PSD (Power Spectral Density) view in the Oscilloscope High Resolution.
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_psd_show(&mut self) -> Result<(), NanonisError> {
+        self.quick_send("OsciHR.PSDShow", vec![], vec![], vec![])?;
+        Ok(())
+    }
+
+    /// Set the PSD weighting mode in the Oscilloscope High Resolution.
+    ///
+    /// # Arguments
+    /// * `osci_index` - Oscilloscope channel index
+    /// * `weighting` - Weighting mode (0 = None, 1 = A-weighting, 2 = C-weighting)
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_psd_weight_set(
+        &mut self,
+        osci_index: i32,
+        weighting: u16,
+    ) -> Result<(), NanonisError> {
+        self.quick_send(
+            "OsciHR.PSDWeightSet",
+            vec![
+                NanonisValue::I32(osci_index),
+                NanonisValue::U16(weighting),
+            ],
+            vec!["i", "H"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the PSD weighting mode in the Oscilloscope High Resolution.
+    ///
+    /// # Arguments
+    /// * `osci_index` - Oscilloscope channel index
+    ///
+    /// # Returns
+    /// Weighting mode (0 = None, 1 = A-weighting, 2 = C-weighting).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_psd_weight_get(&mut self, osci_index: i32) -> Result<u16, NanonisError> {
+        let result = self.quick_send(
+            "OsciHR.PSDWeightGet",
+            vec![NanonisValue::I32(osci_index)],
+            vec!["i"],
+            vec!["H"],
+        )?;
+        match result.first() {
+            Some(value) => Ok(value.as_u16()?),
+            None => Err(NanonisError::Protocol(
+                "No PSD weighting returned".to_string(),
+            )),
+        }
+    }
+
+    /// Set the PSD window function in the Oscilloscope High Resolution.
+    ///
+    /// # Arguments
+    /// * `osci_index` - Oscilloscope channel index
+    /// * `window` - Window function (0 = None, 1 = Hann, 2 = Hamming, 3 = Blackman-Harris, 4 = Flat Top)
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_psd_window_set(
+        &mut self,
+        osci_index: i32,
+        window: u16,
+    ) -> Result<(), NanonisError> {
+        self.quick_send(
+            "OsciHR.PSDWindowSet",
+            vec![
+                NanonisValue::I32(osci_index),
+                NanonisValue::U16(window),
+            ],
+            vec!["i", "H"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the PSD window function in the Oscilloscope High Resolution.
+    ///
+    /// # Arguments
+    /// * `osci_index` - Oscilloscope channel index
+    ///
+    /// # Returns
+    /// Window function (0 = None, 1 = Hann, 2 = Hamming, 3 = Blackman-Harris, 4 = Flat Top).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_psd_window_get(&mut self, osci_index: i32) -> Result<u16, NanonisError> {
+        let result = self.quick_send(
+            "OsciHR.PSDWindowGet",
+            vec![NanonisValue::I32(osci_index)],
+            vec!["i"],
+            vec!["H"],
+        )?;
+        match result.first() {
+            Some(value) => Ok(value.as_u16()?),
+            None => Err(NanonisError::Protocol(
+                "No PSD window returned".to_string(),
+            )),
+        }
+    }
+
+    /// Set the PSD averaging type in the Oscilloscope High Resolution.
+    ///
+    /// # Arguments
+    /// * `osci_index` - Oscilloscope channel index
+    /// * `averaging_type` - Averaging type (0 = None, 1 = Linear, 2 = Exponential)
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_psd_avrg_type_set(
+        &mut self,
+        osci_index: i32,
+        averaging_type: u16,
+    ) -> Result<(), NanonisError> {
+        self.quick_send(
+            "OsciHR.PSDAvrgTypeSet",
+            vec![
+                NanonisValue::I32(osci_index),
+                NanonisValue::U16(averaging_type),
+            ],
+            vec!["i", "H"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the PSD averaging type in the Oscilloscope High Resolution.
+    ///
+    /// # Arguments
+    /// * `osci_index` - Oscilloscope channel index
+    ///
+    /// # Returns
+    /// Averaging type (0 = None, 1 = Linear, 2 = Exponential).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_psd_avrg_type_get(&mut self, osci_index: i32) -> Result<u16, NanonisError> {
+        let result = self.quick_send(
+            "OsciHR.PSDAvrgTypeGet",
+            vec![NanonisValue::I32(osci_index)],
+            vec!["i"],
+            vec!["H"],
+        )?;
+        match result.first() {
+            Some(value) => Ok(value.as_u16()?),
+            None => Err(NanonisError::Protocol(
+                "No PSD averaging type returned".to_string(),
+            )),
+        }
+    }
+
+    /// Set the PSD averaging count in the Oscilloscope High Resolution.
+    ///
+    /// # Arguments
+    /// * `osci_index` - Oscilloscope channel index
+    /// * `count` - Number of averages
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_psd_avrg_count_set(
+        &mut self,
+        osci_index: i32,
+        count: i32,
+    ) -> Result<(), NanonisError> {
+        self.quick_send(
+            "OsciHR.PSDAvrgCountSet",
+            vec![
+                NanonisValue::I32(osci_index),
+                NanonisValue::I32(count),
+            ],
+            vec!["i", "i"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the PSD averaging count in the Oscilloscope High Resolution.
+    ///
+    /// # Arguments
+    /// * `osci_index` - Oscilloscope channel index
+    ///
+    /// # Returns
+    /// Number of averages.
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_psd_avrg_count_get(&mut self, osci_index: i32) -> Result<i32, NanonisError> {
+        let result = self.quick_send(
+            "OsciHR.PSDAvrgCountGet",
+            vec![NanonisValue::I32(osci_index)],
+            vec!["i"],
+            vec!["i"],
+        )?;
+        match result.first() {
+            Some(value) => Ok(value.as_i32()?),
+            None => Err(NanonisError::Protocol(
+                "No PSD averaging count returned".to_string(),
+            )),
+        }
+    }
+
+    /// Restart PSD averaging in the Oscilloscope High Resolution.
+    ///
+    /// # Arguments
+    /// * `osci_index` - Oscilloscope channel index
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_psd_avrg_restart(&mut self, osci_index: i32) -> Result<(), NanonisError> {
+        self.quick_send(
+            "OsciHR.PSDAvrgRestart",
+            vec![NanonisValue::I32(osci_index)],
+            vec!["i"],
+            vec![],
+        )?;
+        Ok(())
+    }
+
+    /// Get the PSD data from the Oscilloscope High Resolution.
+    ///
+    /// # Arguments
+    /// * `osci_index` - Oscilloscope channel index
+    /// * `data_to_get` - 0 = Current data, 1 = Wait for next acquisition
+    /// * `timeout_s` - Timeout in seconds
+    ///
+    /// # Returns
+    /// Tuple of (frequency_start, frequency_delta, psd_data, timeout_occurred).
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails.
+    pub fn osci_hr_psd_data_get(
+        &mut self,
+        osci_index: i32,
+        data_to_get: u16,
+        timeout_s: f64,
+    ) -> Result<(f64, f64, Vec<f32>, bool), NanonisError> {
+        let result = self.quick_send(
+            "OsciHR.PSDDataGet",
+            vec![
+                NanonisValue::I32(osci_index),
+                NanonisValue::U16(data_to_get),
+                NanonisValue::F64(timeout_s),
+            ],
+            vec!["i", "H", "d"],
+            vec!["d", "d", "i", "*f", "I"],
+        )?;
+
+        if result.len() >= 5 {
+            let frequency_start = result[0].as_f64()?;
+            let frequency_delta = result[1].as_f64()?;
+            let psd_data = result[3].as_f32_array()?.to_vec();
+            let timeout_occurred = result[4].as_u32()? == 1;
+            Ok((frequency_start, frequency_delta, psd_data, timeout_occurred))
+        } else {
+            Err(NanonisError::Protocol(
+                "Invalid PSD data response".to_string(),
+            ))
+        }
+    }
 }
