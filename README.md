@@ -10,7 +10,6 @@ A Rust client library for communicating with [Nanonis](https://www.specs-group.c
 
 - **Type-safe API**: Strongly-typed Rust interface to Nanonis commands
 - **Comprehensive coverage**: Support for motors, scanning, spectroscopy, oscilloscopes, and more
-- **Error handling**: Robust error types with detailed context
 - **TCPLogger streaming**: Continuous data acquisition support
 - **Safety features**: Automatic tip withdrawal and motor positioning on client drop
 - **Protocol abstraction**: Low-level protocol details handled internally
@@ -35,7 +34,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-nanonis-rs = "0.0.3"
+nanonis-rs = "0.1.0"
 ```
 
 ### Basic Example
