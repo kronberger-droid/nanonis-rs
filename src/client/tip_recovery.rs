@@ -157,17 +157,9 @@ impl NanonisClient {
 
         if result.len() >= 5 {
             let channel_indexes = result[1].as_i32_array()?.to_vec();
-            let rows = result[2].as_i32()? as usize;
-            let cols = result[3].as_i32()? as usize;
 
-            // Parse 2D data array
-            let flat_data = result[4].as_f32_array()?;
-            let mut data_2d = Vec::with_capacity(rows);
-            for row in 0..rows {
-                let start_idx = row * cols;
-                let end_idx = start_idx + cols;
-                data_2d.push(flat_data[start_idx..end_idx].to_vec());
-            }
+            // The protocol layer already parses "2f" into a 2D array
+            let data_2d = result[4].as_f32_2d_array()?.clone();
 
             Ok((channel_indexes, data_2d))
         } else {
@@ -430,13 +422,17 @@ impl NanonisClient {
             let restore_feedback = match result[10].as_u32()? {
                 0 => true,
                 1 => false,
-                _ => panic!("Wrong return value for restore_feedback"),
+                v => return Err(NanonisError::Protocol(format!(
+                    "Invalid restore_feedback value: {v}, expected 0 or 1"
+                ))),
             };
 
             let change_bias = match result[1].as_u32()? {
                 0 => true,
                 1 => false,
-                _ => panic!("Wrong return value for change_bias"),
+                v => return Err(NanonisError::Protocol(format!(
+                    "Invalid change_bias value: {v}, expected 0 or 1"
+                ))),
             };
 
             Ok(TipShaperConfig {

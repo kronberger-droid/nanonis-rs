@@ -179,180 +179,17 @@ impl Protocol {
         }
     }
 
-    /// Parse response with error checking - returns (values, cursor_position)
+    /// Parse response with error checking
     pub fn parse_response_with_error_check(
         response: &[u8],
         response_types: &[&str],
     ) -> Result<Vec<NanonisValue>, NanonisError> {
-        // Parse normal response data first
-        let values = Self::parse_response(response, response_types)?;
+        let (values, cursor_position) = Self::parse_response(response, response_types)?;
 
-        // Calculate cursor position after parsing all response data
-        let cursor = Self::calculate_cursor_position(response, response_types)?;
-
-        // Check for errors at the end
-        Self::parse_error_info(response, cursor)?;
+        // Check for errors in the section following the parsed data
+        Self::parse_error_info(response, cursor_position)?;
 
         Ok(values)
-    }
-
-    /// Calculate cursor position after parsing response data
-    fn calculate_cursor_position(
-        response: &[u8],
-        response_types: &[&str],
-    ) -> Result<usize, NanonisError> {
-        let mut cursor = std::io::Cursor::new(response);
-        let mut result = Vec::with_capacity(response_types.len());
-
-        // This is essentially the same parsing logic as parse_response,
-        // but we only track the cursor position without storing values
-        for &response_type in response_types {
-            match response_type {
-                "H" => {
-                    cursor.read_u16::<BigEndian>()?;
-                }
-                "h" => {
-                    cursor.read_i16::<BigEndian>()?;
-                }
-                "I" => {
-                    let val = cursor.read_u32::<BigEndian>()?;
-                    result.push(val);
-                }
-                "i" => {
-                    let val = cursor.read_i32::<BigEndian>()? as u32;
-                    result.push(val);
-                }
-                "f" => {
-                    cursor.read_f32::<BigEndian>()?;
-                }
-                "d" => {
-                    cursor.read_f64::<BigEndian>()?;
-                }
-
-                t if t.contains("*f") => {
-                    let len = if t.starts_with("+") {
-                        cursor.read_u32::<BigEndian>()? as usize
-                    } else if let Some(&prev_val) = result.last() {
-                        prev_val as usize
-                    } else {
-                        return Err(NanonisError::Protocol(
-                            "Array length not specified".to_string(),
-                        ));
-                    };
-
-                    for _ in 0..len {
-                        cursor.read_f32::<BigEndian>()?;
-                    }
-                }
-
-                t if t.contains("*d") => {
-                    let len = if t.starts_with("+") {
-                        cursor.read_u32::<BigEndian>()? as usize
-                    } else if let Some(&prev_val) = result.last() {
-                        prev_val as usize
-                    } else {
-                        return Err(NanonisError::Protocol(
-                            "Array length not specified".to_string(),
-                        ));
-                    };
-
-                    for _ in 0..len {
-                        cursor.read_f64::<BigEndian>()?;
-                    }
-                }
-
-                t if t.contains("*i") => {
-                    let len = if t.starts_with("+") {
-                        cursor.read_u32::<BigEndian>()? as usize
-                    } else if let Some(&prev_val) = result.last() {
-                        prev_val as usize
-                    } else {
-                        return Err(NanonisError::Protocol(
-                            "Array length not specified".to_string(),
-                        ));
-                    };
-
-                    for _ in 0..len {
-                        cursor.read_i32::<BigEndian>()?;
-                    }
-                }
-
-                "+*c" => {
-                    let _total_size = cursor.read_u32::<BigEndian>()?;
-                    let num_strings = cursor.read_u32::<BigEndian>()? as usize;
-
-                    for _ in 0..num_strings {
-                        let string_len = cursor.read_u32::<BigEndian>()? as usize;
-                        let mut string_bytes = vec![0u8; string_len];
-                        cursor.read_exact(&mut string_bytes)?;
-                    }
-                }
-
-                "*+c" => {
-                    let num_strings = if let Some(&prev_val) = result.last() {
-                        prev_val as usize
-                    } else {
-                        return Err(NanonisError::Protocol(
-                            "String count not found for *+c type".to_string(),
-                        ));
-                    };
-
-                    for _ in 0..num_strings {
-                        let string_len = cursor.read_u32::<BigEndian>()? as usize;
-                        let mut string_bytes = vec![0u8; string_len];
-                        cursor.read_exact(&mut string_bytes)?;
-                    }
-                }
-
-                "*-c" => {
-                    let string_length = result.last().ok_or_else(|| {
-                        NanonisError::Protocol(
-                            "String length not found for *-c type".to_string(),
-                        )
-                    })?;
-
-                    let mut string_bytes = vec![0u8; *string_length as usize];
-                    cursor.read_exact(&mut string_bytes)?;
-                }
-
-                "*+i" => {
-                    let array_count = if let Some(&prev_val) = result.last() {
-                        prev_val as usize
-                    } else {
-                        return Err(NanonisError::Protocol(
-                            "Array count not found for *+i type".to_string(),
-                        ));
-                    };
-
-                    for _ in 0..array_count {
-                        cursor.read_i32::<BigEndian>()?;
-                    }
-                }
-
-                "2f" => {
-                    if result.len() < 2 {
-                        return Err(NanonisError::Protocol(
-                            "2D array dimensions not found".to_string(),
-                        ));
-                    }
-
-                    let rows = result[result.len() - 2] as usize;
-                    let cols = result[result.len() - 1] as usize;
-
-                    for _ in 0..(rows * cols) {
-                        cursor.read_f32::<BigEndian>()?;
-                    }
-                }
-
-                _ => {
-                    return Err(NanonisError::Protocol(format!(
-                        "Unsupported response type: {response_type}"
-                    )));
-                }
-            };
-        }
-
-        Ok(cursor.position() as usize)
     }
 
     /// Serialize a value according to its type specification
@@ -453,11 +290,12 @@ impl Protocol {
         Ok(())
     }
 
-    /// Parse response data according to type specifications
+    /// Parse response data according to type specifications.
+    /// Returns the parsed values and the cursor position after parsing (for error section location).
     pub fn parse_response(
         response: &[u8],
         response_types: &[&str],
-    ) -> Result<Vec<NanonisValue>, NanonisError> {
+    ) -> Result<(Vec<NanonisValue>, usize), NanonisError> {
         let mut cursor = std::io::Cursor::new(response);
         let mut result = Vec::with_capacity(response_types.len());
 
@@ -712,7 +550,7 @@ impl Protocol {
             result.push(value);
         }
 
-        Ok(result)
+        Ok((result, cursor.position() as usize))
     }
 
     /// Create command header with proper padding using safe serialization

@@ -31,15 +31,18 @@ impl std::fmt::Display for ChannelIndex {
     }
 }
 
-impl From<u8> for ChannelIndex {
-    fn from(index: u8) -> Self {
-        Self::new(index).unwrap_or_else(|_| {
-            log::warn!(
-                "Creating ChannelIndex from out-of-range value {}, clamping to 23",
+impl TryFrom<u8> for ChannelIndex {
+    type Error = NanonisError;
+
+    fn try_from(index: u8) -> Result<Self, Self::Error> {
+        if index <= 23 {
+            Ok(Self(index))
+        } else {
+            Err(NanonisError::Protocol(format!(
+                "Channel index {} out of range (0-23)",
                 index
-            );
-            Self(23.min(index))
-        })
+            )))
+        }
     }
 }
 

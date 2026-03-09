@@ -14,8 +14,6 @@ pub enum NanonisValue {
     F64(f64),
     String(String),
     ArrayU8(Vec<u8>),
-    ArrayU16(Vec<u16>),
-    ArrayI16(Vec<i16>),
     ArrayU32(Vec<u32>),
     ArrayI32(Vec<i32>),
     ArrayF32(Vec<f32>),

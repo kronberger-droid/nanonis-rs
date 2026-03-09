@@ -4,6 +4,7 @@ pub use types::*;
 use super::NanonisClient;
 use crate::error::NanonisError;
 use crate::types::NanonisValue;
+use log::debug;
 
 impl NanonisClient {
     /// Start the acquisition in the TCP Logger module.
@@ -192,7 +193,7 @@ impl NanonisClient {
     pub fn tcplog_status_get(&mut self) -> Result<TCPLogStatus, NanonisError> {
         let result = self.quick_send("TCPLog.StatusGet", vec![], vec![], vec!["i"])?;
 
-        println!("{result:?}");
+        debug!("TCPLog.StatusGet result: {result:?}");
 
         match result.first() {
             Some(value) => {

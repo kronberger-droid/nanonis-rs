@@ -161,21 +161,28 @@ impl From<MotorAxis> for u16 {
     }
 }
 
-impl From<u16> for MotorAxis {
-    fn from(value: u16) -> Self {
+impl TryFrom<u16> for MotorAxis {
+    type Error = NanonisError;
+
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
-            0 => MotorAxis::All,
-            1 => MotorAxis::X,
-            2 => MotorAxis::Y,
-            3 => MotorAxis::Z,
-            _ => MotorAxis::All,
+            0 => Ok(MotorAxis::All),
+            1 => Ok(MotorAxis::X),
+            2 => Ok(MotorAxis::Y),
+            3 => Ok(MotorAxis::Z),
+            _ => Err(NanonisError::Protocol(format!(
+                "Invalid motor axis: {}",
+                value
+            ))),
         }
     }
 }
 
-impl From<i32> for MotorAxis {
-    fn from(value: i32) -> Self {
-        MotorAxis::from(value as u16)
+impl TryFrom<i32> for MotorAxis {
+    type Error = NanonisError;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        MotorAxis::try_from(value as u16)
     }
 }
 

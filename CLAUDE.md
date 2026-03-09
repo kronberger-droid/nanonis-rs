@@ -142,22 +142,13 @@ The `quick_send` method handles:
 
 ### Error Handling (`src/error.rs`)
 
-`NanonisError` uses thiserror for typed errors (6 variants):
-- **Io(std::io::Error)**: Network/I/O errors - uses `#[from]` for automatic conversion
+`NanonisError` uses thiserror for typed errors (4 variants):
+- **Io { source, context }**: Network/I/O errors with context string
 - **Timeout(String)**: Connection or operation timeouts with context
-- **Protocol(String)**: Binary protocol parsing/validation errors
-- **Type(String)**: Internal type conversion failures (NanonisValue mismatches)
-- **InvalidInput(String)**: Invalid user input or command parameters
+- **Protocol(String)**: Binary protocol parsing/validation errors and type mismatches
 - **Server { code, message }**: Errors returned by the Nanonis server
 
-**Error context helper**: The `io_context()` helper function adds context to I/O errors:
-
-```rust
-// Internal use only
-NanonisError::io_context(io_error, "writing command header")
-```
-
-This creates an I/O error with formatted context while preserving the original error kind. All error handling uses explicit `.map_err()` calls - no extension traits or anyhow-style magic.
+All error handling uses explicit `.map_err()` calls - no extension traits or anyhow-style magic.
 
 ### TCPLogger Stream (`src/tcplogger_stream.rs`)
 
@@ -198,15 +189,14 @@ No unit tests are currently implemented - the doctests serve as integration test
 
 ## Resource Cleanup
 
-`NanonisClient` implements Drop to safely withdraw the tip and move motors when the client is destroyed:
+`NanonisClient` optionally implements Drop to safely withdraw the tip and move motors away from the surface when the client is destroyed. This must be explicitly enabled via the builder:
 
 ```rust
-impl Drop for NanonisClient {
-    fn drop(&mut self) {
-        let _ = self.z_ctrl_withdraw(false, Duration::from_secs(1));
-        let _ = self.motor_start_move(MotorDirection::ZPlus, 2u16, MotorGroup::Group1, false);
-    }
-}
+let client = NanonisClient::builder()
+    .address("127.0.0.1")
+    .port(6501)
+    .safe_tip_on_drop(true)  // opt-in
+    .build()?;
 ```
 
-This safety feature prevents tip crashes if client code panics or exits unexpectedly.
+When enabled, on drop it withdraws the Z-controller and moves motors in the ZMinus direction (away from surface). Default: disabled.

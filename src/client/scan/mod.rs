@@ -51,8 +51,8 @@ impl NanonisClient {
             vec!["f", "f", "f", "f", "f"],
         )?;
         if result.len() >= 5 {
-            let center_x = result[0].as_f64()?;
-            let center_y = result[1].as_f64()?;
+            let center_x = result[0].as_f32()? as f64;
+            let center_y = result[1].as_f32()? as f64;
             let width = result[2].as_f32()?;
             let height = result[3].as_f32()?;
             let angle = result[4].as_f32()?;
@@ -430,18 +430,9 @@ impl NanonisClient {
 
         if result.len() >= 6 {
             let channel_name = result[1].as_string()?.to_string();
-            let rows = result[2].as_i32()? as usize;
-            let cols = result[3].as_i32()? as usize;
 
-            // Parse 2D array from flat f32 array
-            let flat_data = result[4].as_f32_array()?;
-            let mut data_2d = Vec::with_capacity(rows);
-
-            for row in 0..rows {
-                let start_idx = row * cols;
-                let end_idx = start_idx + cols;
-                data_2d.push(flat_data[start_idx..end_idx].to_vec());
-            }
+            // The protocol layer already parses "2f" into a 2D array
+            let data_2d = result[4].as_f32_2d_array()?.clone();
 
             let scan_direction = result[5].as_u32()? == 1;
             Ok((channel_name, data_2d, scan_direction))
