@@ -434,20 +434,20 @@ impl NanonisClient {
     /// Set the home position properties.
     ///
     /// # Arguments
-    /// * `home_mode` - Home position mode (0=no change, 1=absolute, 2=relative)
+    /// * `home_mode` - Home position mode (no change / absolute / relative)
     /// * `home_position_m` - Home position in meters
     ///
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn z_ctrl_home_props_set(
         &mut self,
-        home_mode: u16,
+        home_mode: ZHomeMode,
         home_position_m: f32,
     ) -> Result<(), NanonisError> {
         self.quick_send(
             "ZCtrl.HomePropsSet",
             vec![
-                NanonisValue::U16(home_mode),
+                NanonisValue::U16(home_mode.into()),
                 NanonisValue::F32(home_position_m),
             ],
             vec!["H", "f"],
