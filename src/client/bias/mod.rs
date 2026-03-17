@@ -2,6 +2,7 @@ mod types;
 pub use types::*;
 
 use super::NanonisClient;
+use crate::client::z_ctrl::ZControllerHold;
 use crate::error::NanonisError;
 use crate::types::NanonisValue;
 
@@ -244,8 +245,8 @@ impl NanonisClient {
     /// * `wait_until_done` - If true, function waits until pulse completes
     /// * `pulse_width_s` - Pulse duration in seconds
     /// * `bias_value_v` - Bias voltage during pulse (in volts)
-    /// * `z_controller_hold` - Z-controller behavior: 0=no change, 1=hold, 2=don't hold
-    /// * `pulse_mode` - Pulse mode: 0=no change, 1=relative to current, 2=absolute value
+    /// * `z_controller_hold` - Z-controller behavior during pulse
+    /// * `pulse_mode` - Whether bias value is relative or absolute
     ///
     /// # Errors
     /// Returns `NanonisError` if:
@@ -256,17 +257,19 @@ impl NanonisClient {
     /// # Examples
     /// ```no_run
     /// use nanonis_rs::NanonisClient;
+    /// use nanonis_rs::z_ctrl::ZControllerHold;
+    /// use nanonis_rs::bias::PulseMode;
     ///
     /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
     ///
     /// // Apply a 100ms pulse at +2V, holding Z-controller, absolute voltage
-    /// client.bias_pulse(true, 0.1, 2.0, 1, 2)?;
+    /// client.bias_pulse(true, 0.1, 2.0, ZControllerHold::Hold, PulseMode::Absolute)?;
     ///
     /// // Quick +0.5V pulse relative to current bias, don't wait
-    /// client.bias_pulse(false, 0.01, 0.5, 0, 1)?;
+    /// client.bias_pulse(false, 0.01, 0.5, ZControllerHold::NoChange, PulseMode::Relative)?;
     ///
     /// // Long conditioning pulse at -3V absolute, hold Z-controller
-    /// client.bias_pulse(true, 1.0, -3.0, 1, 2)?;
+    /// client.bias_pulse(true, 1.0, -3.0, ZControllerHold::Hold, PulseMode::Absolute)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn bias_pulse(
@@ -274,8 +277,8 @@ impl NanonisClient {
         wait_until_done: bool,
         pulse_width_s: f32,
         bias_value_v: f32,
-        z_controller_hold: u16,
-        pulse_mode: u16,
+        z_controller_hold: ZControllerHold,
+        pulse_mode: PulseMode,
     ) -> Result<(), NanonisError> {
         let wait_flag = if wait_until_done { 1u32 } else { 0u32 };
 
@@ -285,8 +288,8 @@ impl NanonisClient {
                 NanonisValue::U32(wait_flag),
                 NanonisValue::F32(pulse_width_s),
                 NanonisValue::F32(bias_value_v),
-                NanonisValue::U16(z_controller_hold),
-                NanonisValue::U16(pulse_mode),
+                NanonisValue::U16(z_controller_hold.into()),
+                NanonisValue::U16(pulse_mode.into()),
             ],
             vec!["I", "f", "f", "H", "H"],
             vec![],
