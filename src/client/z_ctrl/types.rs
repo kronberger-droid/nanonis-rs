@@ -65,3 +65,38 @@ impl TryFrom<u16> for ZControllerStatus {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn z_controller_hold_encoding() {
+        assert_eq!(u16::from(ZControllerHold::NoChange), 0);
+        assert_eq!(u16::from(ZControllerHold::Hold), 1);
+        assert_eq!(u16::from(ZControllerHold::Release), 2);
+    }
+
+    #[test]
+    fn z_home_mode_encoding() {
+        assert_eq!(u16::from(ZHomeMode::NoChange), 0);
+        assert_eq!(u16::from(ZHomeMode::Absolute), 1);
+        assert_eq!(u16::from(ZHomeMode::Relative), 2);
+    }
+
+    #[test]
+    fn z_controller_status_valid() {
+        assert_eq!(ZControllerStatus::try_from(1u16).unwrap(), ZControllerStatus::Off);
+        assert_eq!(ZControllerStatus::try_from(2u16).unwrap(), ZControllerStatus::On);
+        assert_eq!(ZControllerStatus::try_from(3u16).unwrap(), ZControllerStatus::Hold);
+        assert_eq!(ZControllerStatus::try_from(4u16).unwrap(), ZControllerStatus::SwitchingOff);
+        assert_eq!(ZControllerStatus::try_from(5u16).unwrap(), ZControllerStatus::SafeTip);
+        assert_eq!(ZControllerStatus::try_from(6u16).unwrap(), ZControllerStatus::Withdrawing);
+    }
+
+    #[test]
+    fn z_controller_status_invalid() {
+        assert!(ZControllerStatus::try_from(0u16).is_err()); // starts at 1
+        assert!(ZControllerStatus::try_from(7u16).is_err());
+    }
+}

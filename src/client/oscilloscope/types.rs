@@ -391,3 +391,147 @@ impl OsciData {
             .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- TriggerMode (infallible From) ----
+
+    #[test]
+    fn trigger_mode_roundtrip() {
+        assert_eq!(TriggerMode::from(0u16), TriggerMode::Immediate);
+        assert_eq!(TriggerMode::from(1u16), TriggerMode::Level);
+        assert_eq!(TriggerMode::from(2u16), TriggerMode::Digital);
+        // Unknown values default to Immediate
+        assert_eq!(TriggerMode::from(99u16), TriggerMode::Immediate);
+    }
+
+    #[test]
+    fn trigger_mode_to_u16() {
+        assert_eq!(u16::from(TriggerMode::Immediate), 0);
+        assert_eq!(u16::from(TriggerMode::Level), 1);
+        assert_eq!(u16::from(TriggerMode::Digital), 2);
+    }
+
+    #[test]
+    fn trigger_mode_from_i32() {
+        assert_eq!(TriggerMode::from(0i32), TriggerMode::Immediate);
+        assert_eq!(TriggerMode::from(1i32), TriggerMode::Level);
+    }
+
+    // ---- TriggerSlope ----
+
+    #[test]
+    fn trigger_slope_roundtrip() {
+        assert_eq!(u16::from(TriggerSlope::Falling), 0);
+        assert_eq!(u16::from(TriggerSlope::Rising), 1);
+        assert_eq!(TriggerSlope::try_from(0u16).unwrap(), TriggerSlope::Falling);
+        assert_eq!(TriggerSlope::try_from(1u16).unwrap(), TriggerSlope::Rising);
+        assert!(TriggerSlope::try_from(2u16).is_err());
+    }
+
+    // ---- OsciTriggerMode ----
+
+    #[test]
+    fn osci_trigger_mode_roundtrip() {
+        for (mode, val) in [
+            (OsciTriggerMode::Immediate, 0), (OsciTriggerMode::Level, 1), (OsciTriggerMode::Auto, 2),
+        ] {
+            assert_eq!(u16::from(mode), val);
+            assert_eq!(OsciTriggerMode::try_from(val).unwrap(), mode);
+        }
+        assert!(OsciTriggerMode::try_from(3u16).is_err());
+    }
+
+    // ---- OversamplingIndex ----
+
+    #[test]
+    fn oversampling_index_roundtrip() {
+        for val in 0..6u16 {
+            let idx = OversamplingIndex::try_from(val).unwrap();
+            assert_eq!(u16::from(idx), val);
+        }
+        assert!(OversamplingIndex::try_from(6u16).is_err());
+    }
+
+    // ---- TriggerConfig constructors ----
+
+    #[test]
+    fn trigger_config_immediate() {
+        let tc = TriggerConfig::immediate();
+        assert_eq!(tc.mode, OsciTriggerMode::Immediate);
+        assert_eq!(tc.level, 0.0);
+    }
+
+    #[test]
+    fn trigger_config_level() {
+        let tc = TriggerConfig::level_trigger(1.5, TriggerSlope::Rising);
+        assert_eq!(tc.mode, OsciTriggerMode::Level);
+        assert_eq!(tc.level, 1.5);
+        assert_eq!(tc.slope, TriggerSlope::Rising);
+    }
+
+    #[test]
+    fn trigger_config_auto() {
+        let tc = TriggerConfig::auto_trigger();
+        assert_eq!(tc.mode, OsciTriggerMode::Auto);
+    }
+
+    // ---- OsciData time methods ----
+
+    #[test]
+    fn osci_data_time_series() {
+        let data = OsciData::new(0.0, 0.001, 3, vec![10.0, 20.0, 30.0]);
+        let ts = data.time_series();
+        assert_eq!(ts.len(), 3);
+        assert!((ts[0].0 - 0.0).abs() < 1e-15);
+        assert!((ts[1].0 - 0.001).abs() < 1e-15);
+        assert!((ts[2].0 - 0.002).abs() < 1e-15);
+        assert_eq!(ts[0].1, 10.0);
+        assert_eq!(ts[2].1, 30.0);
+    }
+
+    #[test]
+    fn osci_data_time_series_with_offset() {
+        let data = OsciData::new(1.0, 0.5, 2, vec![5.0, 6.0]);
+        let ts = data.time_series();
+        assert!((ts[0].0 - 1.0).abs() < 1e-15);
+        assert!((ts[1].0 - 1.5).abs() < 1e-15);
+    }
+
+    #[test]
+    fn osci_data_duration() {
+        let data = OsciData::new(0.0, 0.01, 101, vec![]);
+        assert!((data.duration() - 1.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn osci_data_sample_rate() {
+        let data = OsciData::new(0.0, 0.001, 100, vec![]);
+        assert!((data.sample_rate() - 1000.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn osci_data_sample_rate_zero_dt() {
+        let data = OsciData::new(0.0, 0.0, 100, vec![]);
+        assert_eq!(data.sample_rate(), 0.0);
+    }
+
+    #[test]
+    fn osci_data_time_points() {
+        let data = OsciData::new(0.5, 0.1, 3, vec![]);
+        let tp = data.time_points();
+        assert_eq!(tp.len(), 3);
+        assert!((tp[0] - 0.5).abs() < 1e-15);
+        assert!((tp[1] - 0.6).abs() < 1e-15);
+        assert!((tp[2] - 0.7).abs() < 1e-15);
+    }
+
+    #[test]
+    fn osci_data_empty() {
+        let data = OsciData::new(0.0, 0.01, 0, vec![]);
+        assert!(data.time_series().is_empty());
+        assert!(data.time_points().is_empty());
+    }
+}

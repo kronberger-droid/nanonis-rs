@@ -319,3 +319,125 @@ impl MotorDisplacement {
         movements
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- MotorDirection round-trip ----
+
+    #[test]
+    fn motor_direction_roundtrip() {
+        for (dir, val) in [
+            (MotorDirection::XPlus, 0), (MotorDirection::XMinus, 1),
+            (MotorDirection::YPlus, 2), (MotorDirection::YMinus, 3),
+            (MotorDirection::ZPlus, 4), (MotorDirection::ZMinus, 5),
+        ] {
+            assert_eq!(u32::from(dir), val);
+            assert_eq!(MotorDirection::try_from(val).unwrap(), dir);
+        }
+    }
+
+    #[test]
+    fn motor_direction_invalid() {
+        assert!(MotorDirection::try_from(6u32).is_err());
+        assert!(MotorDirection::try_from(u32::MAX).is_err());
+    }
+
+    // ---- MotorGroup round-trip ----
+
+    #[test]
+    fn motor_group_roundtrip() {
+        for val in 0..6u32 {
+            let group = MotorGroup::try_from(val).unwrap();
+            assert_eq!(u32::from(group), val);
+        }
+        assert!(MotorGroup::try_from(6u32).is_err());
+    }
+
+    // ---- MotorAxis ----
+
+    #[test]
+    fn motor_axis_roundtrip() {
+        for (axis, val) in [
+            (MotorAxis::All, 0u16), (MotorAxis::X, 1), (MotorAxis::Y, 2), (MotorAxis::Z, 3),
+        ] {
+            assert_eq!(u16::from(axis), val);
+            assert_eq!(MotorAxis::try_from(val).unwrap(), axis);
+        }
+        assert!(MotorAxis::try_from(4u16).is_err());
+    }
+
+    #[test]
+    fn motor_axis_from_i32() {
+        assert_eq!(MotorAxis::try_from(0i32).unwrap(), MotorAxis::All);
+        assert_eq!(MotorAxis::try_from(3i32).unwrap(), MotorAxis::Z);
+    }
+
+    // ---- MovementMode ----
+
+    #[test]
+    fn movement_mode_roundtrip() {
+        assert_eq!(u32::from(MovementMode::Relative), 0);
+        assert_eq!(u32::from(MovementMode::Absolute), 1);
+        assert_eq!(MovementMode::try_from(0u32).unwrap(), MovementMode::Relative);
+        assert_eq!(MovementMode::try_from(1u32).unwrap(), MovementMode::Absolute);
+        assert!(MovementMode::try_from(2u32).is_err());
+    }
+
+    // ---- MotorDisplacement ----
+
+    #[test]
+    fn displacement_zero() {
+        let d = MotorDisplacement::new(0, 0, 0);
+        assert!(d.is_zero());
+        assert!(d.to_motor_movements().is_empty());
+    }
+
+    #[test]
+    fn displacement_single_axis() {
+        let d = MotorDisplacement::x_only(5);
+        assert!(!d.is_zero());
+        let moves = d.to_motor_movements();
+        assert_eq!(moves, vec![(MotorDirection::XPlus, 5)]);
+
+        let d = MotorDisplacement::y_only(-3);
+        assert_eq!(d.to_motor_movements(), vec![(MotorDirection::YMinus, 3)]);
+    }
+
+    #[test]
+    fn displacement_z_minus_before_xy_z_plus_after() {
+        // Safety-critical: Z-away must come first, Z-toward must come last
+        let d = MotorDisplacement::new(2, -3, -5);
+        let moves = d.to_motor_movements();
+        assert_eq!(moves[0].0, MotorDirection::ZMinus); // first
+        assert_eq!(moves[0].1, 5);
+
+        let d = MotorDisplacement::new(2, -3, 5);
+        let moves = d.to_motor_movements();
+        assert_eq!(moves.last().unwrap().0, MotorDirection::ZPlus); // last
+        assert_eq!(moves.last().unwrap().1, 5);
+    }
+
+    #[test]
+    fn displacement_all_axes() {
+        let d = MotorDisplacement::new(-1, 2, -3);
+        let moves = d.to_motor_movements();
+        // Order: ZMinus, X, Y (no ZPlus since z < 0)
+        assert_eq!(moves.len(), 3);
+        assert_eq!(moves[0], (MotorDirection::ZMinus, 3));
+        assert_eq!(moves[1], (MotorDirection::XMinus, 1));
+        assert_eq!(moves[2], (MotorDirection::YPlus, 2));
+    }
+
+    // ---- StepCount ----
+
+    #[test]
+    fn step_count_conversions() {
+        let s = StepCount::from(100u16);
+        assert_eq!(u16::from(s), 100);
+        // u32 truncation
+        let s = StepCount::from(65536u32); // wraps to 0
+        assert_eq!(u16::from(s), 0);
+    }
+}

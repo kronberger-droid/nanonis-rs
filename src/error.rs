@@ -126,3 +126,62 @@ impl From<serde_json::Error> for NanonisError {
         NanonisError::Protocol(format!("JSON serialization error: {error}"))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_io_error() -> NanonisError {
+        NanonisError::Io {
+            source: std::io::Error::new(std::io::ErrorKind::ConnectionRefused, "refused"),
+            context: "connecting".to_string(),
+        }
+    }
+
+    #[test]
+    fn predicates() {
+        let io = make_io_error();
+        assert!(io.is_io());
+        assert!(!io.is_timeout());
+        assert!(!io.is_protocol());
+        assert!(!io.is_server_error());
+
+        let timeout = NanonisError::Timeout("scan".into());
+        assert!(timeout.is_timeout());
+        assert!(!timeout.is_io());
+
+        let proto = NanonisError::Protocol("bad".into());
+        assert!(proto.is_protocol());
+        assert!(!proto.is_server_error());
+
+        let server = NanonisError::Server { code: -1, message: "fail".into() };
+        assert!(server.is_server_error());
+        assert!(!server.is_protocol());
+    }
+
+    #[test]
+    fn error_code() {
+        assert_eq!(NanonisError::Server { code: 42, message: "".into() }.error_code(), Some(42));
+        assert_eq!(NanonisError::Server { code: -1, message: "".into() }.error_code(), Some(-1));
+        assert_eq!(NanonisError::Protocol("x".into()).error_code(), None);
+        assert_eq!(NanonisError::Timeout("".into()).error_code(), None);
+        assert_eq!(make_io_error().error_code(), None);
+    }
+
+    #[test]
+    fn display_formats() {
+        assert!(NanonisError::Timeout("scan".into()).to_string().contains("scan"));
+        assert_eq!(NanonisError::Timeout("".into()).to_string(), "Timeout");
+        assert!(NanonisError::Protocol("bad parse".into()).to_string().contains("bad parse"));
+        let s = NanonisError::Server { code: -1, message: "Invalid".into() }.to_string();
+        assert!(s.contains("Invalid") && s.contains("-1"));
+    }
+
+    #[test]
+    fn from_io_error() {
+        let io_err = std::io::Error::new(std::io::ErrorKind::BrokenPipe, "pipe");
+        let err: NanonisError = io_err.into();
+        assert!(err.is_io());
+        assert!(err.to_string().contains("IO operation failed"));
+    }
+}

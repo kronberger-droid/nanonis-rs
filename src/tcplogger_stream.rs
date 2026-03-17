@@ -101,7 +101,13 @@ impl TCPLoggerStream {
         let _state = TCPLogStatus::try_from(state_val as i32)?;
 
         // Calculate total frame size and read data portion
-        let data_size = (num_channels * 4) as usize; // 4 bytes per f32
+        let data_size = (num_channels as usize)
+            .checked_mul(4) // 4 bytes per f32
+            .ok_or_else(|| {
+                NanonisError::Protocol(format!(
+                    "Channel count overflow: {num_channels} channels"
+                ))
+            })?;
         self.buffer.resize(data_size, 0);
 
         self.stream

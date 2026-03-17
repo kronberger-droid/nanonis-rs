@@ -90,7 +90,13 @@ impl NanonisClient {
             for row in 0..rows {
                 let start_idx = row * cols;
                 let end_idx = start_idx + cols;
-                data_2d.push(flat_data[start_idx..end_idx].to_vec());
+                if end_idx <= flat_data.len() {
+                    data_2d.push(flat_data[start_idx..end_idx].to_vec());
+                } else {
+                    return Err(NanonisError::Protocol(
+                        "Truncated Z-spectroscopy data".to_string(),
+                    ));
+                }
             }
 
             let parameters = result[7].as_f32_array()?.to_vec();
@@ -701,6 +707,9 @@ impl NanonisClient {
     /// Returns `NanonisError` if communication fails.
     pub fn z_spectr_retract_delay_get(&mut self) -> Result<f32, NanonisError> {
         let result = self.quick_send("ZSpectr.RetractDelayGet", vec![], vec![], vec!["f"])?;
+        if result.is_empty() {
+            return Err(NanonisError::Protocol("Empty response from ZSpectr.RetractDelayGet".to_string()));
+        }
         result[0].as_f32()
     }
 
@@ -749,7 +758,9 @@ impl NanonisClient {
             vec![],
             vec!["i", "f", "i", "H"],
         )?;
-
+        if result.len() < 4 {
+            return Err(NanonisError::Protocol("Truncated response from ZSpectr.RetractSecondGet".to_string()));
+        }
         Ok((
             result[0].as_i32()?,
             result[1].as_f32()?,
@@ -784,6 +795,9 @@ impl NanonisClient {
     /// Returns `NanonisError` if communication fails.
     pub fn z_spectr_dig_sync_get(&mut self) -> Result<u16, NanonisError> {
         let result = self.quick_send("ZSpectr.DigSyncGet", vec![], vec![], vec!["H"])?;
+        if result.is_empty() {
+            return Err(NanonisError::Protocol("Empty response from ZSpectr.DigSyncGet".to_string()));
+        }
         result[0].as_u16()
     }
 
@@ -832,7 +846,9 @@ impl NanonisClient {
             vec![],
             vec!["H", "H", "f", "f"],
         )?;
-
+        if result.len() < 4 {
+            return Err(NanonisError::Protocol("Truncated response from ZSpectr.TTLSyncGet".to_string()));
+        }
         Ok((
             result[0].as_u16()?,
             result[1].as_u16()?,
@@ -880,7 +896,9 @@ impl NanonisClient {
             vec![],
             vec!["H", "I"],
         )?;
-
+        if result.len() < 2 {
+            return Err(NanonisError::Protocol("Truncated response from ZSpectr.PulseSeqSyncGet".to_string()));
+        }
         Ok((result[0].as_u16()?, result[1].as_u32()?))
     }
 }

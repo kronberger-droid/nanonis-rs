@@ -357,8 +357,17 @@ impl NanonisClient {
     /// # Arguments
     /// * `addr` - Server address in format "host:port"
     /// * `config` - Connection configuration with custom timeouts
+    #[deprecated(since = "0.2.0", note = "Use NanonisClient::builder() instead")]
     pub fn with_config(addr: &str, config: ConnectionConfig) -> Result<Self, NanonisError> {
-        Self::builder().address(addr).config(config).build()
+        let (host, port_str) = addr.rsplit_once(':').ok_or_else(|| {
+            NanonisError::Protocol(format!(
+                "Invalid address format '{addr}': expected 'host:port'"
+            ))
+        })?;
+        let port: u16 = port_str.parse().map_err(|_| {
+            NanonisError::Protocol(format!("Invalid port in address '{addr}'"))
+        })?;
+        Self::builder().address(host).port(port).config(config).build()
     }
 
     /// Enable or disable debug output
@@ -484,6 +493,17 @@ impl NanonisClient {
                 debug!("Failed to parse response: {}", e);
                 e
             })?;
+
+        // Validate that the parsed result has the expected number of values.
+        // parse_response should always produce exactly one value per type descriptor,
+        // but this guard prevents panics in callers if there's ever a mismatch.
+        if result.len() < return_types.len() {
+            return Err(NanonisError::Protocol(format!(
+                "{command}: expected {} return values, got {}",
+                return_types.len(),
+                result.len()
+            )));
+        }
 
         debug!("=== COMMAND SUCCESS: {} ===", command);
         debug!("Parsed result: {:?}", result);

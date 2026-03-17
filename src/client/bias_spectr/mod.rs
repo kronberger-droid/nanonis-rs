@@ -3,8 +3,7 @@ pub use types::*;
 
 use super::NanonisClient;
 use crate::error::NanonisError;
-use crate::types::NanonisValue;
-use std::time::Duration;
+use crate::types::{NanonisValue, duration_from_secs_f32};
 
 impl NanonisClient {
     /// Open the Bias Spectroscopy module.
@@ -97,11 +96,9 @@ impl NanonisClient {
                 parameters,
             })
         } else {
-            Ok(BiasSpectrResult {
-                channel_names: vec![],
-                data: vec![],
-                parameters: vec![],
-            })
+            Err(NanonisError::Protocol(
+                "Truncated response from BiasSpectr.Start".to_string(),
+            ))
         }
     }
 
@@ -530,14 +527,14 @@ impl NanonisClient {
 
         if result.len() >= 8 {
             Ok(BiasSpectrTiming {
-                z_averaging_time: Duration::from_secs_f32(result[0].as_f32()?),
+                z_averaging_time: duration_from_secs_f32(result[0].as_f32()?)?,
                 z_offset_m: result[1].as_f32()?,
-                initial_settling_time: Duration::from_secs_f32(result[2].as_f32()?),
+                initial_settling_time: duration_from_secs_f32(result[2].as_f32()?)?,
                 max_slew_rate: result[3].as_f32()?,
-                settling_time: Duration::from_secs_f32(result[4].as_f32()?),
-                integration_time: Duration::from_secs_f32(result[5].as_f32()?),
-                end_settling_time: Duration::from_secs_f32(result[6].as_f32()?),
-                z_control_time: Duration::from_secs_f32(result[7].as_f32()?),
+                settling_time: duration_from_secs_f32(result[4].as_f32()?)?,
+                integration_time: duration_from_secs_f32(result[5].as_f32()?)?,
+                end_settling_time: duration_from_secs_f32(result[6].as_f32()?)?,
+                z_control_time: duration_from_secs_f32(result[7].as_f32()?)?,
             })
         } else {
             Err(NanonisError::Protocol(
@@ -670,8 +667,8 @@ impl NanonisClient {
             Ok(TTLSyncConfig {
                 line: TTLLine::try_from(result[0].as_u16()?)?,
                 polarity: TTLPolarity::try_from(result[1].as_u16()?)?,
-                time_to_on: Duration::from_secs_f32(result[2].as_f32()?),
-                on_duration: Duration::from_secs_f32(result[3].as_f32()?),
+                time_to_on: duration_from_secs_f32(result[2].as_f32()?)?,
+                on_duration: duration_from_secs_f32(result[3].as_f32()?)?,
             })
         } else {
             Err(NanonisError::Protocol(
@@ -818,7 +815,7 @@ impl NanonisClient {
             Ok(AltZCtrlConfig {
                 enabled: result[0].as_u16()? != 0,
                 setpoint: result[1].as_f32()?,
-                settling_time: Duration::from_secs_f32(result[2].as_f32()?),
+                settling_time: duration_from_secs_f32(result[2].as_f32()?)?,
             })
         } else {
             Err(NanonisError::Protocol(
@@ -1123,11 +1120,11 @@ impl NanonisClient {
                 segments.push(MLSSegment {
                     bias_start: *bias_start.get(i).unwrap_or(&0.0),
                     bias_end: *bias_end.get(i).unwrap_or(&0.0),
-                    initial_settling_time: Duration::from_secs_f32(
+                    initial_settling_time: duration_from_secs_f32(
                         *initial_settling.get(i).unwrap_or(&0.0),
-                    ),
-                    settling_time: Duration::from_secs_f32(*settling.get(i).unwrap_or(&0.0)),
-                    integration_time: Duration::from_secs_f32(*integration.get(i).unwrap_or(&0.0)),
+                    )?,
+                    settling_time: duration_from_secs_f32(*settling.get(i).unwrap_or(&0.0))?,
+                    integration_time: duration_from_secs_f32(*integration.get(i).unwrap_or(&0.0))?,
                     max_slew_rate: *slew_rate.get(i).unwrap_or(&1.0),
                     steps: *steps.get(i).unwrap_or(&100),
                 });

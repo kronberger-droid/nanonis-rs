@@ -71,7 +71,7 @@ impl NanonisClient {
             "Motor.PosGet",
             vec![
                 NanonisValue::U32(group.into()),
-                NanonisValue::U32(timeout.as_millis() as u32),
+                NanonisValue::U32(timeout.as_millis().min(u32::MAX as u128) as u32),
             ],
             vec!["I", "I"],
             vec!["d", "d", "d"],

@@ -389,7 +389,7 @@ impl NanonisClient {
             "ZCtrl.Withdraw",
             vec![
                 NanonisValue::U32(wait_flag),
-                NanonisValue::I32(timeout_ms.as_millis() as i32),
+                NanonisValue::I32(timeout_ms.as_millis().min(i32::MAX as u128) as i32),
             ],
             vec!["I", "i"],
             vec![],
@@ -426,6 +426,9 @@ impl NanonisClient {
     /// Returns `NanonisError` if communication fails.
     pub fn z_ctrl_switch_off_delay_get(&mut self) -> Result<f32, NanonisError> {
         let result = self.quick_send("ZCtrl.SwitchOffDelayGet", vec![], vec![], vec!["f"])?;
+        if result.is_empty() {
+            return Err(NanonisError::Protocol("Empty response from ZCtrl.SwitchOffDelayGet".to_string()));
+        }
         result[0].as_f32()
     }
 
@@ -465,7 +468,9 @@ impl NanonisClient {
     /// Returns `NanonisError` if communication fails.
     pub fn z_ctrl_home_props_get(&mut self) -> Result<(bool, f32), NanonisError> {
         let result = self.quick_send("ZCtrl.HomePropsGet", vec![], vec![], vec!["H", "f"])?;
-
+        if result.len() < 2 {
+            return Err(NanonisError::Protocol("Truncated response from ZCtrl.HomePropsGet".to_string()));
+        }
         Ok((result[0].as_u16()? != 0, result[1].as_f32()?))
     }
 
@@ -501,6 +506,9 @@ impl NanonisClient {
             vec!["i", "i", "*+c", "i"],
         )?;
 
+        if result.len() < 4 {
+            return Err(NanonisError::Protocol("Truncated response from ZCtrl.CtrlListGet".to_string()));
+        }
         Ok((result[2].as_string_array()?.to_vec(), result[3].as_i32()?))
     }
 
@@ -530,6 +538,9 @@ impl NanonisClient {
     /// Returns `NanonisError` if communication fails.
     pub fn z_ctrl_withdraw_rate_get(&mut self) -> Result<f32, NanonisError> {
         let result = self.quick_send("ZCtrl.WithdrawRateGet", vec![], vec![], vec!["f"])?;
+        if result.is_empty() {
+            return Err(NanonisError::Protocol("Empty response from ZCtrl.WithdrawRateGet".to_string()));
+        }
         result[0].as_f32()
     }
 
@@ -559,6 +570,9 @@ impl NanonisClient {
     /// Returns `NanonisError` if communication fails.
     pub fn z_ctrl_limits_enabled_get(&mut self) -> Result<bool, NanonisError> {
         let result = self.quick_send("ZCtrl.LimitsEnabledGet", vec![], vec![], vec!["I"])?;
+        if result.is_empty() {
+            return Err(NanonisError::Protocol("Empty response from ZCtrl.LimitsEnabledGet".to_string()));
+        }
         Ok(result[0].as_u32()? != 0)
     }
 
@@ -596,7 +610,9 @@ impl NanonisClient {
     /// Returns `NanonisError` if communication fails.
     pub fn z_ctrl_limits_get(&mut self) -> Result<(f32, f32), NanonisError> {
         let result = self.quick_send("ZCtrl.LimitsGet", vec![], vec![], vec!["f", "f"])?;
-
+        if result.len() < 2 {
+            return Err(NanonisError::Protocol("Truncated response from ZCtrl.LimitsGet".to_string()));
+        }
         Ok((result[0].as_f32()?, result[1].as_f32()?))
     }
 
@@ -609,6 +625,9 @@ impl NanonisClient {
     /// Returns `NanonisError` if communication fails.
     pub fn z_ctrl_status_get(&mut self) -> Result<ZControllerStatus, NanonisError> {
         let result = self.quick_send("ZCtrl.StatusGet", vec![], vec![], vec!["H"])?;
+        if result.is_empty() {
+            return Err(NanonisError::Protocol("Empty response from ZCtrl.StatusGet".to_string()));
+        }
         ZControllerStatus::try_from(result[0].as_u16()?)
     }
 }

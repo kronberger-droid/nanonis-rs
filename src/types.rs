@@ -1,5 +1,19 @@
 use crate::error::NanonisError;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
+
+// ==================== Helpers ====================
+
+/// Safely convert an f32 seconds value (from the server) to a Duration.
+/// Returns a Protocol error if the value is negative, infinite, or NaN.
+pub(crate) fn duration_from_secs_f32(secs: f32) -> Result<Duration, NanonisError> {
+    if secs.is_nan() || secs.is_infinite() || secs < 0.0 {
+        return Err(NanonisError::Protocol(format!(
+            "Invalid duration value: {secs}"
+        )));
+    }
+    Ok(Duration::from_secs_f32(secs))
+}
 
 // ==================== Core Protocol Value Type ====================
 
@@ -316,5 +330,104 @@ pub struct Position {
 impl Position {
     pub fn new(x: f64, y: f64) -> Self {
         Self { x, y }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- duration_from_secs_f32 ----
+
+    #[test]
+    fn duration_valid_values() {
+        assert_eq!(duration_from_secs_f32(0.0).unwrap(), Duration::from_secs_f32(0.0));
+        assert_eq!(duration_from_secs_f32(1.5).unwrap(), Duration::from_secs_f32(1.5));
+        assert_eq!(duration_from_secs_f32(0.001).unwrap(), Duration::from_secs_f32(0.001));
+    }
+
+    #[test]
+    fn duration_rejects_negative() {
+        assert!(duration_from_secs_f32(-1.0).is_err());
+        assert!(duration_from_secs_f32(-0.001).is_err());
+    }
+
+    #[test]
+    fn duration_rejects_nan() {
+        assert!(duration_from_secs_f32(f32::NAN).is_err());
+    }
+
+    #[test]
+    fn duration_rejects_infinity() {
+        assert!(duration_from_secs_f32(f32::INFINITY).is_err());
+        assert!(duration_from_secs_f32(f32::NEG_INFINITY).is_err());
+    }
+
+    // ---- NanonisValue From impls ----
+
+    #[test]
+    fn from_primitives() {
+        assert!(matches!(NanonisValue::from(1.0f32), NanonisValue::F32(v) if v == 1.0));
+        assert!(matches!(NanonisValue::from(2.0f64), NanonisValue::F64(v) if v == 2.0));
+        assert!(matches!(NanonisValue::from(42u16), NanonisValue::U16(42)));
+        assert!(matches!(NanonisValue::from(100u32), NanonisValue::U32(100)));
+        assert!(matches!(NanonisValue::from(-5i16), NanonisValue::I16(-5)));
+        assert!(matches!(NanonisValue::from(-10i32), NanonisValue::I32(-10)));
+    }
+
+    #[test]
+    fn from_collections() {
+        assert!(matches!(NanonisValue::from("hello".to_string()), NanonisValue::String(s) if s == "hello"));
+        assert!(matches!(NanonisValue::from(vec![1.0f32, 2.0]), NanonisValue::ArrayF32(_)));
+        assert!(matches!(NanonisValue::from(vec![1i32, 2]), NanonisValue::ArrayI32(_)));
+    }
+
+    // ---- NanonisValue TryFrom / as_* methods ----
+
+    #[test]
+    fn tryfrom_correct_types() {
+        assert_eq!(f32::try_from(NanonisValue::F32(3.14)).unwrap(), 3.14);
+        assert_eq!(f64::try_from(NanonisValue::F64(2.718)).unwrap(), 2.718);
+        assert_eq!(u16::try_from(NanonisValue::U16(100)).unwrap(), 100);
+        assert_eq!(u32::try_from(NanonisValue::U32(200)).unwrap(), 200);
+        assert_eq!(i16::try_from(NanonisValue::I16(-5)).unwrap(), -5);
+        assert_eq!(i32::try_from(NanonisValue::I32(-10)).unwrap(), -10);
+    }
+
+    #[test]
+    fn tryfrom_wrong_types() {
+        assert!(f32::try_from(NanonisValue::I32(1)).is_err());
+        assert!(u16::try_from(NanonisValue::F32(1.0)).is_err());
+        assert!(Vec::<f32>::try_from(NanonisValue::I32(1)).is_err());
+        assert!(Vec::<String>::try_from(NanonisValue::F32(1.0)).is_err());
+    }
+
+    #[test]
+    fn as_methods_correct() {
+        assert_eq!(NanonisValue::F32(1.0).as_f32().unwrap(), 1.0);
+        assert_eq!(NanonisValue::F64(2.0).as_f64().unwrap(), 2.0);
+        assert_eq!(NanonisValue::U16(10).as_u16().unwrap(), 10);
+        assert_eq!(NanonisValue::U32(20).as_u32().unwrap(), 20);
+        assert_eq!(NanonisValue::I16(-3).as_i16().unwrap(), -3);
+        assert_eq!(NanonisValue::I32(-7).as_i32().unwrap(), -7);
+        assert_eq!(NanonisValue::String("hi".into()).as_string().unwrap(), "hi");
+    }
+
+    #[test]
+    fn as_methods_wrong_type() {
+        assert!(NanonisValue::I32(1).as_f32().is_err());
+        assert!(NanonisValue::F32(1.0).as_u32().is_err());
+        assert!(NanonisValue::U16(1).as_string().is_err());
+    }
+
+    #[test]
+    fn as_array_methods() {
+        let f32_arr = NanonisValue::ArrayF32(vec![1.0, 2.0]);
+        assert_eq!(f32_arr.as_f32_array().unwrap(), &[1.0, 2.0]);
+        assert!(f32_arr.as_f64_array().is_err());
+
+        let str_arr = NanonisValue::ArrayString(vec!["a".into(), "b".into()]);
+        assert_eq!(str_arr.as_string_array().unwrap(), &["a", "b"]);
+        assert!(str_arr.as_f32_array().is_err());
     }
 }

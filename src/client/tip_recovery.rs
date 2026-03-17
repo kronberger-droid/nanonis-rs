@@ -1,6 +1,6 @@
 use super::NanonisClient;
 use crate::error::NanonisError;
-use crate::types::NanonisValue;
+use crate::types::{NanonisValue, duration_from_secs_f32};
 use std::time::Duration;
 
 /// Configuration parameters for tip shaper
@@ -436,16 +436,16 @@ impl NanonisClient {
             };
 
             Ok(TipShaperConfig {
-                switch_off_delay: Duration::from_secs_f32(result[0].as_f32()?),
+                switch_off_delay: duration_from_secs_f32(result[0].as_f32()?)?,
                 change_bias,
                 bias_v: result[2].as_f32()?,
                 tip_lift_m: result[3].as_f32()?,
-                lift_time_1: Duration::from_secs_f32(result[4].as_f32()?),
+                lift_time_1: duration_from_secs_f32(result[4].as_f32()?)?,
                 bias_lift_v: result[5].as_f32()?,
-                bias_settling_time: Duration::from_secs_f32(result[6].as_f32()?),
+                bias_settling_time: duration_from_secs_f32(result[6].as_f32()?)?,
                 lift_height_m: result[7].as_f32()?,
-                lift_time_2: Duration::from_secs_f32(result[8].as_f32()?),
-                end_wait_time: Duration::from_secs_f32(result[9].as_f32()?),
+                lift_time_2: duration_from_secs_f32(result[8].as_f32()?)?,
+                end_wait_time: duration_from_secs_f32(result[9].as_f32()?)?,
                 restore_feedback,
             })
         } else {

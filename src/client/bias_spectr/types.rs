@@ -5,28 +5,39 @@ use std::time::Duration;
 /// Digital synchronization mode for bias spectroscopy.
 ///
 /// Controls TTL/pulse sequence synchronization with spectroscopy measurement stages.
+///
+/// Note: The Nanonis protocol uses different wire encodings for GET and SET:
+/// - **GET** responses: `0=Off, 1=TTLSync, 2=PulseSequence` (decoded via [`TryFrom<u16>`])
+/// - **SET** requests: `0=no change, 1=Off, 2=TTLSync, 3=PulseSequence` (encoded via [`From<DigitalSync> for u16`])
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum DigitalSync {
-    /// No change to current setting
+    /// No change to current setting (SET only — never returned by GET)
     #[default]
-    NoChange = 0,
+    NoChange,
     /// TTL synchronization disabled
-    Off = 1,
+    Off,
     /// TTL synchronization enabled
-    TTLSync = 2,
+    TTLSync,
     /// Pulse sequence synchronization enabled
-    PulseSequence = 3,
+    PulseSequence,
 }
 
 impl From<DigitalSync> for u16 {
+    /// Encodes for SET commands (0=no change, 1=Off, 2=TTLSync, 3=PulseSequence).
     fn from(mode: DigitalSync) -> Self {
-        mode as u16
+        match mode {
+            DigitalSync::NoChange => 0,
+            DigitalSync::Off => 1,
+            DigitalSync::TTLSync => 2,
+            DigitalSync::PulseSequence => 3,
+        }
     }
 }
 
 impl TryFrom<u16> for DigitalSync {
     type Error = crate::error::NanonisError;
 
+    /// Decodes from GET responses (0=Off, 1=TTLSync, 2=PulseSequence).
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(DigitalSync::Off),
@@ -41,30 +52,42 @@ impl TryFrom<u16> for DigitalSync {
 }
 
 /// TTL line selection for synchronization.
+///
+/// Note: The Nanonis protocol uses different wire encodings for GET and SET:
+/// - **GET** responses: `0=HSLine1, 1=HSLine2, 2=HSLine3, 3=HSLine4` (decoded via [`TryFrom<u16>`])
+/// - **SET** requests: `0=no change, 1=HSLine1, 2=HSLine2, 3=HSLine3, 4=HSLine4` (encoded via [`From<TTLLine> for u16`])
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum TTLLine {
-    /// No change to current setting
+    /// No change to current setting (SET only — never returned by GET)
     #[default]
-    NoChange = 0,
+    NoChange,
     /// High-speed digital line 1
-    HSLine1 = 1,
+    HSLine1,
     /// High-speed digital line 2
-    HSLine2 = 2,
+    HSLine2,
     /// High-speed digital line 3
-    HSLine3 = 3,
+    HSLine3,
     /// High-speed digital line 4
-    HSLine4 = 4,
+    HSLine4,
 }
 
 impl From<TTLLine> for u16 {
+    /// Encodes for SET commands (0=no change, 1=HSLine1, 2=HSLine2, 3=HSLine3, 4=HSLine4).
     fn from(line: TTLLine) -> Self {
-        line as u16
+        match line {
+            TTLLine::NoChange => 0,
+            TTLLine::HSLine1 => 1,
+            TTLLine::HSLine2 => 2,
+            TTLLine::HSLine3 => 3,
+            TTLLine::HSLine4 => 4,
+        }
     }
 }
 
 impl TryFrom<u16> for TTLLine {
     type Error = crate::error::NanonisError;
 
+    /// Decodes from GET responses (0=HSLine1, 1=HSLine2, 2=HSLine3, 3=HSLine4).
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(TTLLine::HSLine1),
@@ -80,26 +103,36 @@ impl TryFrom<u16> for TTLLine {
 }
 
 /// TTL polarity for switching action.
+///
+/// Note: The Nanonis protocol uses different wire encodings for GET and SET:
+/// - **GET** responses: `0=LowActive, 1=HighActive` (decoded via [`TryFrom<u16>`])
+/// - **SET** requests: `0=no change, 1=LowActive, 2=HighActive` (encoded via [`From<TTLPolarity> for u16`])
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum TTLPolarity {
-    /// No change to current setting
+    /// No change to current setting (SET only — never returned by GET)
     #[default]
-    NoChange = 0,
+    NoChange,
     /// Active low polarity
-    LowActive = 1,
+    LowActive,
     /// Active high polarity
-    HighActive = 2,
+    HighActive,
 }
 
 impl From<TTLPolarity> for u16 {
+    /// Encodes for SET commands (0=no change, 1=LowActive, 2=HighActive).
     fn from(polarity: TTLPolarity) -> Self {
-        polarity as u16
+        match polarity {
+            TTLPolarity::NoChange => 0,
+            TTLPolarity::LowActive => 1,
+            TTLPolarity::HighActive => 2,
+        }
     }
 }
 
 impl TryFrom<u16> for TTLPolarity {
     type Error = crate::error::NanonisError;
 
+    /// Decodes from GET responses (0=LowActive, 1=HighActive).
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(TTLPolarity::LowActive),
@@ -113,26 +146,36 @@ impl TryFrom<u16> for TTLPolarity {
 }
 
 /// Optional flag for settings that support "no change" option.
+///
+/// Note: The Nanonis protocol uses different wire encodings for GET and SET:
+/// - **GET** responses: `0=Off, 1=On` (decoded via [`TryFrom<u16>`])
+/// - **SET** requests: `0=no change, 1=On, 2=Off` (encoded via [`From<OptionalFlag> for u16`])
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum OptionalFlag {
-    /// No change to current setting
+    /// No change to current setting (SET only — never returned by GET)
     #[default]
-    NoChange = 0,
+    NoChange,
     /// Enable the option
-    On = 1,
+    On,
     /// Disable the option
-    Off = 2,
+    Off,
 }
 
 impl From<OptionalFlag> for u16 {
+    /// Encodes for SET commands (0=no change, 1=On, 2=Off).
     fn from(flag: OptionalFlag) -> Self {
-        flag as u16
+        match flag {
+            OptionalFlag::NoChange => 0,
+            OptionalFlag::On => 1,
+            OptionalFlag::Off => 2,
+        }
     }
 }
 
 impl TryFrom<u16> for OptionalFlag {
     type Error = crate::error::NanonisError;
 
+    /// Decodes from GET responses (0=Off, 1=On).
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(OptionalFlag::Off),
@@ -449,5 +492,152 @@ impl Default for MLSSegment {
             max_slew_rate: 1.0,
             steps: 100,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- DigitalSync GET/SET asymmetry ----
+
+    #[test]
+    fn digital_sync_set_encoding() {
+        assert_eq!(u16::from(DigitalSync::NoChange), 0);
+        assert_eq!(u16::from(DigitalSync::Off), 1);
+        assert_eq!(u16::from(DigitalSync::TTLSync), 2);
+        assert_eq!(u16::from(DigitalSync::PulseSequence), 3);
+    }
+
+    #[test]
+    fn digital_sync_get_decoding() {
+        assert_eq!(DigitalSync::try_from(0u16).unwrap(), DigitalSync::Off);
+        assert_eq!(DigitalSync::try_from(1u16).unwrap(), DigitalSync::TTLSync);
+        assert_eq!(DigitalSync::try_from(2u16).unwrap(), DigitalSync::PulseSequence);
+        assert!(DigitalSync::try_from(3u16).is_err());
+    }
+
+    #[test]
+    fn digital_sync_get_set_offset() {
+        // GET value + 1 = SET value for active modes (Off, TTLSync, PulseSequence)
+        let modes = [DigitalSync::Off, DigitalSync::TTLSync, DigitalSync::PulseSequence];
+        for (get_val, mode) in modes.iter().enumerate() {
+            let decoded = DigitalSync::try_from(get_val as u16).unwrap();
+            assert_eq!(decoded, *mode);
+            assert_eq!(u16::from(decoded), get_val as u16 + 1);
+        }
+    }
+
+    // ---- TTLLine GET/SET asymmetry ----
+
+    #[test]
+    fn ttl_line_set_encoding() {
+        assert_eq!(u16::from(TTLLine::NoChange), 0);
+        assert_eq!(u16::from(TTLLine::HSLine1), 1);
+        assert_eq!(u16::from(TTLLine::HSLine2), 2);
+        assert_eq!(u16::from(TTLLine::HSLine3), 3);
+        assert_eq!(u16::from(TTLLine::HSLine4), 4);
+    }
+
+    #[test]
+    fn ttl_line_get_decoding() {
+        assert_eq!(TTLLine::try_from(0u16).unwrap(), TTLLine::HSLine1);
+        assert_eq!(TTLLine::try_from(1u16).unwrap(), TTLLine::HSLine2);
+        assert_eq!(TTLLine::try_from(2u16).unwrap(), TTLLine::HSLine3);
+        assert_eq!(TTLLine::try_from(3u16).unwrap(), TTLLine::HSLine4);
+        assert!(TTLLine::try_from(4u16).is_err());
+    }
+
+    #[test]
+    fn ttl_line_get_set_offset() {
+        for get_val in 0..4u16 {
+            let line = TTLLine::try_from(get_val).unwrap();
+            assert_eq!(u16::from(line), get_val + 1);
+        }
+    }
+
+    // ---- TTLPolarity GET/SET asymmetry ----
+
+    #[test]
+    fn ttl_polarity_set_encoding() {
+        assert_eq!(u16::from(TTLPolarity::NoChange), 0);
+        assert_eq!(u16::from(TTLPolarity::LowActive), 1);
+        assert_eq!(u16::from(TTLPolarity::HighActive), 2);
+    }
+
+    #[test]
+    fn ttl_polarity_get_decoding() {
+        assert_eq!(TTLPolarity::try_from(0u16).unwrap(), TTLPolarity::LowActive);
+        assert_eq!(TTLPolarity::try_from(1u16).unwrap(), TTLPolarity::HighActive);
+        assert!(TTLPolarity::try_from(2u16).is_err());
+    }
+
+    // ---- OptionalFlag GET/SET asymmetry ----
+
+    #[test]
+    fn optional_flag_set_encoding() {
+        assert_eq!(u16::from(OptionalFlag::NoChange), 0);
+        assert_eq!(u16::from(OptionalFlag::On), 1);
+        assert_eq!(u16::from(OptionalFlag::Off), 2);
+    }
+
+    #[test]
+    fn optional_flag_get_decoding() {
+        assert_eq!(OptionalFlag::try_from(0u16).unwrap(), OptionalFlag::Off);
+        assert_eq!(OptionalFlag::try_from(1u16).unwrap(), OptionalFlag::On);
+        assert!(OptionalFlag::try_from(2u16).is_err());
+    }
+
+    // ---- SweepMode ----
+
+    #[test]
+    fn sweep_mode_from_str() {
+        assert_eq!(SweepMode::try_from("linear").unwrap(), SweepMode::Linear);
+        assert_eq!(SweepMode::try_from("Linear").unwrap(), SweepMode::Linear);
+        assert_eq!(SweepMode::try_from("LINEAR").unwrap(), SweepMode::Linear);
+        assert_eq!(SweepMode::try_from("mls").unwrap(), SweepMode::MLS);
+        assert_eq!(SweepMode::try_from("MLS").unwrap(), SweepMode::MLS);
+        assert!(SweepMode::try_from("unknown").is_err());
+    }
+
+    #[test]
+    fn sweep_mode_to_str() {
+        assert_eq!(<&str>::from(SweepMode::Linear), "Linear");
+        assert_eq!(<&str>::from(SweepMode::MLS), "MLS");
+    }
+
+    // ---- Default values ----
+
+    #[test]
+    fn default_timing() {
+        let t = BiasSpectrTiming::default();
+        assert_eq!(t.z_averaging_time, Duration::from_millis(100));
+        assert_eq!(t.z_offset_m, 0.0);
+    }
+
+    #[test]
+    fn default_adv_props() {
+        let p = BiasSpectrAdvProps::default();
+        assert!(p.reset_bias);
+        assert!(p.z_controller_hold);
+        assert!(!p.record_final_z);
+    }
+
+    #[test]
+    fn props_builder_defaults() {
+        let b = BiasSpectrPropsBuilder::new();
+        assert_eq!(b.save_all, OptionalFlag::NoChange);
+        assert_eq!(b.num_sweeps, 0);
+        assert_eq!(b.num_points, 0);
+    }
+
+    #[test]
+    fn props_builder_chain() {
+        let b = BiasSpectrPropsBuilder::new()
+            .num_points(500)
+            .autosave(OptionalFlag::On)
+            .build();
+        assert_eq!(b.num_points, 500);
+        assert_eq!(b.autosave, OptionalFlag::On);
     }
 }

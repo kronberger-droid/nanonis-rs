@@ -203,19 +203,24 @@ impl ScanPropsBuilder {
     }
 }
 
+/// Autosave mode for scan images.
+///
+/// Note: The Nanonis protocol uses different wire encodings for GET and SET:
+/// - **GET** responses: `0=All, 1=Next, 2=Off` (decoded via [`TryFrom<u32>`])
+/// - **SET** requests: `0=no change, 1=All, 2=Next, 3=Off` (encoded via [`From<AutosaveMode> for u32`])
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AutosaveMode {
     /// Save all future images automatically
-    All = 0,
+    All,
     /// Save only the next frame
-    Next = 1,
+    Next,
     /// Autosave is disabled
-    Off = 2,
+    Off,
 }
 
 impl From<AutosaveMode> for u32 {
+    /// Encodes for SET commands (0=no change, 1=All, 2=Next, 3=Off).
     fn from(mode: AutosaveMode) -> Self {
-        // For SET: 0=no change, 1=All, 2=Next, 3=Off
         match mode {
             AutosaveMode::All => 1,
             AutosaveMode::Next => 2,
@@ -227,8 +232,8 @@ impl From<AutosaveMode> for u32 {
 impl TryFrom<u32> for AutosaveMode {
     type Error = NanonisError;
 
+    /// Decodes from GET responses (0=All, 1=Next, 2=Off).
     fn try_from(value: u32) -> Result<Self, Self::Error> {
-        // For GET: 0=All, 1=Next, 2=Off
         match value {
             0 => Ok(AutosaveMode::All),
             1 => Ok(AutosaveMode::Next),
@@ -241,19 +246,24 @@ impl TryFrom<u32> for AutosaveMode {
     }
 }
 
+/// Autopaste mode for scan images.
+///
+/// Note: The Nanonis protocol uses different wire encodings for GET and SET:
+/// - **GET** responses: `0=All, 1=Next, 2=Off` (decoded via [`TryFrom<u32>`])
+/// - **SET** requests: `0=no change, 1=All, 2=Next, 3=Off` (encoded via [`From<AutopasteMode> for u32`])
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AutopasteMode {
     /// Paste all future images automatically
-    All = 0,
+    All,
     /// Paste only the next frame
-    Next = 1,
+    Next,
     /// Autopaste is disabled
-    Off = 2,
+    Off,
 }
 
 impl From<AutopasteMode> for u32 {
+    /// Encodes for SET commands (0=no change, 1=All, 2=Next, 3=Off).
     fn from(mode: AutopasteMode) -> Self {
-        // For SET: 0=no change, 1=All, 2=Next, 3=Off
         match mode {
             AutopasteMode::All => 1,
             AutopasteMode::Next => 2,
@@ -276,5 +286,95 @@ impl TryFrom<u32> for AutopasteMode {
                 value
             ))),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- ScanAction ----
+
+    #[test]
+    fn scan_action_roundtrip() {
+        for (action, val) in [
+            (ScanAction::Start, 0), (ScanAction::Stop, 1), (ScanAction::Pause, 2),
+            (ScanAction::Resume, 3), (ScanAction::Freeze, 4), (ScanAction::Unfreeze, 5),
+            (ScanAction::GoToCenter, 6),
+        ] {
+            assert_eq!(u16::from(action), val);
+            assert_eq!(ScanAction::try_from(val).unwrap(), action);
+        }
+        assert!(ScanAction::try_from(7u16).is_err());
+    }
+
+    // ---- ScanDirection ----
+
+    #[test]
+    fn scan_direction_roundtrip() {
+        assert_eq!(u32::from(ScanDirection::Down), 0);
+        assert_eq!(u32::from(ScanDirection::Up), 1);
+        assert_eq!(ScanDirection::try_from(0u32).unwrap(), ScanDirection::Down);
+        assert_eq!(ScanDirection::try_from(1u32).unwrap(), ScanDirection::Up);
+        assert!(ScanDirection::try_from(2u32).is_err());
+    }
+
+    // ---- AutosaveMode GET/SET asymmetry ----
+
+    #[test]
+    fn autosave_get_decoding() {
+        assert_eq!(AutosaveMode::try_from(0u32).unwrap(), AutosaveMode::All);
+        assert_eq!(AutosaveMode::try_from(1u32).unwrap(), AutosaveMode::Next);
+        assert_eq!(AutosaveMode::try_from(2u32).unwrap(), AutosaveMode::Off);
+        assert!(AutosaveMode::try_from(3u32).is_err());
+    }
+
+    #[test]
+    fn autosave_set_encoding() {
+        assert_eq!(u32::from(AutosaveMode::All), 1);
+        assert_eq!(u32::from(AutosaveMode::Next), 2);
+        assert_eq!(u32::from(AutosaveMode::Off), 3);
+    }
+
+    #[test]
+    fn autosave_get_set_offset() {
+        // SET encoding = GET encoding + 1 (0 reserved for "no change")
+        for get_val in 0..3u32 {
+            let mode = AutosaveMode::try_from(get_val).unwrap();
+            let set_val = u32::from(mode);
+            assert_eq!(set_val, get_val + 1);
+        }
+    }
+
+    // ---- AutopasteMode ----
+
+    #[test]
+    fn autopaste_get_set_offset() {
+        for get_val in 0..3u32 {
+            let mode = AutopasteMode::try_from(get_val).unwrap();
+            assert_eq!(u32::from(mode), get_val + 1);
+        }
+        assert!(AutopasteMode::try_from(3u32).is_err());
+    }
+
+    // ---- ScanPropsBuilder ----
+
+    #[test]
+    fn scan_props_builder_defaults_none() {
+        let b = ScanPropsBuilder::new();
+        assert!(b.continuous_scan.is_none());
+        assert!(b.autosave.is_none());
+        assert!(b.series_name.is_none());
+    }
+
+    #[test]
+    fn scan_props_builder_chain() {
+        let b = ScanPropsBuilder::new()
+            .continuous_scan(true)
+            .autosave(AutosaveMode::Off)
+            .series_name("test");
+        assert_eq!(b.continuous_scan, Some(true));
+        assert_eq!(b.autosave, Some(AutosaveMode::Off));
+        assert_eq!(b.series_name.unwrap(), "test");
     }
 }

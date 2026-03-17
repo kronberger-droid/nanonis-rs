@@ -489,7 +489,7 @@ impl NanonisClient {
     ) -> Result<(bool, String), NanonisError> {
         let result = self.quick_send(
             "Scan.WaitEndOfScan",
-            vec![NanonisValue::I32(timeout.as_millis() as i32)],
+            vec![NanonisValue::I32(timeout.as_millis().min(i32::MAX as u128) as i32)],
             vec!["i"],
             vec!["I", "I", "*-c"],
         )?;
