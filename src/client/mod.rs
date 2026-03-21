@@ -210,14 +210,7 @@ impl NanonisClientBuilder {
         let stream = TcpStream::connect_timeout(&socket_addr, self.config.connect_timeout)
             .map_err(|e| {
                 warn!("Failed to connect to {address}: {e}");
-                if e.kind() == std::io::ErrorKind::TimedOut {
-                    NanonisError::Timeout(format!("Connection to {address} timed out"))
-                } else {
-                    NanonisError::Io {
-                        source: e,
-                        context: format!("Failed to connect to {address}"),
-                    }
-                }
+                NanonisError::from_io(e, format!("Failed to connect to {address}"))
             })?;
 
         // Set socket timeouts
@@ -228,9 +221,12 @@ impl NanonisClientBuilder {
 
         Ok(NanonisClient {
             stream,
+            address,
+            port,
             debug: self.debug,
             config: self.config,
             safe_tip_on_drop: self.safe_tip_on_drop,
+            poisoned: false,
         })
     }
 }
@@ -245,7 +241,10 @@ impl NanonisClientBuilder {
 /// # Connection Management
 ///
 /// The client maintains a persistent TCP connection to the Nanonis server.
-/// Connection timeouts and retry logic are handled automatically.
+/// If an I/O error occurs during a command, the client is **poisoned** to
+/// prevent desynchronized reads on a corrupted stream. Call
+/// [`reconnect()`](Self::reconnect) to re-establish the connection, or check
+/// [`is_poisoned()`](Self::is_poisoned) to inspect the state.
 ///
 /// # Protocol Support
 ///
@@ -290,9 +289,12 @@ impl NanonisClientBuilder {
 /// ```
 pub struct NanonisClient {
     stream: TcpStream,
+    address: String,
+    port: u16,
     debug: bool,
     config: ConnectionConfig,
     safe_tip_on_drop: bool,
+    poisoned: bool,
 }
 
 impl NanonisClient {
@@ -380,6 +382,50 @@ impl NanonisClient {
         &self.config
     }
 
+    /// Returns `true` if the connection has been poisoned by an I/O error.
+    ///
+    /// After a failed read or write, the TCP stream may be in a desynchronized
+    /// state where subsequent commands would parse garbage data. The client
+    /// refuses further commands until [`reconnect()`](Self::reconnect) is called.
+    pub fn is_poisoned(&self) -> bool {
+        self.poisoned
+    }
+
+    /// Re-establish the TCP connection using the original address and configuration.
+    ///
+    /// This drops the old stream, connects a new one, and clears the poisoned flag.
+    /// Use this after an I/O error has poisoned the client, or when the Nanonis
+    /// application has been restarted.
+    pub fn reconnect(&mut self) -> Result<(), NanonisError> {
+        let socket_addr: SocketAddr = format!("{}:{}", self.address, self.port)
+            .parse()
+            .map_err(|_| {
+                NanonisError::Protocol(format!("Invalid address: {}", self.address))
+            })?;
+
+        debug!("Reconnecting to Nanonis at {}:{}", self.address, self.port);
+
+        let stream =
+            TcpStream::connect_timeout(&socket_addr, self.config.connect_timeout).map_err(
+                |e| {
+                    warn!("Failed to reconnect to {}:{}: {e}", self.address, self.port);
+                    NanonisError::from_io(
+                        e,
+                        format!("Failed to reconnect to {}:{}", self.address, self.port),
+                    )
+                },
+            )?;
+
+        stream.set_read_timeout(Some(self.config.read_timeout))?;
+        stream.set_write_timeout(Some(self.config.write_timeout))?;
+
+        self.stream = stream;
+        self.poisoned = false;
+
+        debug!("Successfully reconnected to Nanonis");
+        Ok(())
+    }
+
     /// Send a quick command with minimal response handling.
     ///
     /// This is a low-level method for sending custom commands that don't fit
@@ -392,6 +438,19 @@ impl NanonisClient {
         argument_types: Vec<&str>,
         return_types: Vec<&str>,
     ) -> Result<Vec<NanonisValue>, NanonisError> {
+        // Refuse commands on a poisoned connection to prevent desynchronized reads
+        if self.poisoned {
+            return Err(NanonisError::Io {
+                source: std::io::Error::new(
+                    std::io::ErrorKind::NotConnected,
+                    "connection poisoned after previous I/O error",
+                ),
+                context: format!(
+                    "Cannot send '{command}': call reconnect() to re-establish the connection"
+                ),
+            });
+        }
+
         debug!("=== COMMAND START: {} ===", command);
         debug!("Arguments: {:?}", args);
         debug!("Argument types: {:?}", argument_types);
@@ -423,9 +482,12 @@ impl NanonisClient {
         }
 
         // Send command
+        // Any I/O failure from here on poisons the connection, because the
+        // stream may be left in a partially-written or partially-read state.
         debug!("Sending header ({} bytes)...", header.len());
         self.stream.write_all(&header).map_err(|e| {
             debug!("Failed to write header: {}", e);
+            self.poisoned = true;
             NanonisError::from_io(e, "Writing command header")
         })?;
 
@@ -433,6 +495,7 @@ impl NanonisClient {
             debug!("Sending body ({} bytes)...", body.len());
             self.stream.write_all(&body).map_err(|e| {
                 debug!("Failed to write body: {}", e);
+                self.poisoned = true;
                 NanonisError::from_io(e, "Writing command body")
             })?;
         }
@@ -444,6 +507,7 @@ impl NanonisClient {
         let response_header =
             Protocol::read_exact_bytes::<HEADER_SIZE>(&mut self.stream).map_err(|e| {
                 debug!("Failed to read response header: {}", e);
+                self.poisoned = true;
                 e
             })?;
 
@@ -463,6 +527,7 @@ impl NanonisClient {
             let body = Protocol::read_variable_bytes(&mut self.stream, body_size as usize)
                 .map_err(|e| {
                     debug!("Failed to read response body: {}", e);
+                    self.poisoned = true;
                     e
                 })?;
             debug!(
@@ -509,6 +574,9 @@ impl NanonisClient {
 impl Drop for NanonisClient {
     fn drop(&mut self) {
         if self.safe_tip_on_drop {
+            // Temporarily clear poisoned flag so safety commands can attempt to run.
+            // These are best-effort anyway (errors are ignored via `let _ =`).
+            self.poisoned = false;
             use motor::{MotorDirection, MotorGroup};
             let _ = self.z_ctrl_withdraw(false, Duration::from_secs(2));
             let _ = self.motor_start_move(MotorDirection::ZMinus, 15u16, MotorGroup::Group1, false);
