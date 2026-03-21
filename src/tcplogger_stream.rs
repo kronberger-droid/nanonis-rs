@@ -5,7 +5,7 @@ use byteorder::{BigEndian, ReadBytesExt};
 use std::io::{Cursor, Read};
 use std::net::{SocketAddr, TcpStream};
 use std::sync::mpsc;
-use std::thread;
+use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 /// Simple TCP Logger Stream - connects to data stream only, no control
@@ -54,26 +54,36 @@ impl TCPLoggerStream {
         })
     }
 
-    /// Spawn background reader thread
+    /// Spawn background reader thread.
     ///
-    /// Creates a background thread that continuously reads TCP Logger data frames
-    /// and sends them through a channel. The thread automatically exits when the
-    /// receiver is dropped.
+    /// Creates a named background thread that continuously reads TCP Logger
+    /// data frames and sends them through a channel. Returns both the
+    /// receiver and a `JoinHandle` so the caller can detect *why* the
+    /// thread exited (clean shutdown vs. I/O error).
     ///
-    /// # Returns
-    /// A receiver channel for `TCPLoggerData` frames.
-    pub fn spawn_background_reader(mut self) -> mpsc::Receiver<SignalFrame> {
+    /// The thread exits when:
+    /// - The receiver is dropped (clean shutdown, returns `Ok(())`)
+    /// - A `read_frame` call fails (returns `Err(NanonisError)`)
+    pub fn spawn_background_reader(
+        mut self,
+    ) -> (mpsc::Receiver<SignalFrame>, JoinHandle<Result<(), NanonisError>>) {
         let (sender, receiver) = mpsc::channel();
 
-        thread::spawn(move || {
-            while let Ok(frame) = self.read_frame() {
-                if sender.send(frame).is_err() {
-                    break;
+        let handle = thread::Builder::new()
+            .name("tcp-logger-reader".into())
+            .spawn(move || loop {
+                match self.read_frame() {
+                    Ok(frame) => {
+                        if sender.send(frame).is_err() {
+                            return Ok(()); // receiver dropped, clean shutdown
+                        }
+                    }
+                    Err(e) => return Err(e),
                 }
-            }
-        });
+            })
+            .expect("failed to spawn tcp-logger-reader thread");
 
-        receiver
+        (receiver, handle)
     }
 
     /// Read a single data frame from the stream
