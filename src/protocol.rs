@@ -118,10 +118,10 @@ impl Protocol {
             }
             Err(e) => {
                 debug!("Failed to read {} bytes: {} (kind: {:?})", N, e, e.kind());
-                Err(NanonisError::Io {
-                    source: e,
-                    context: format!("Failed to read {} bytes from Nanonis", N),
-                })
+                Err(NanonisError::from_io(
+                    e,
+                    format!("Failed to read {N} bytes from Nanonis"),
+                ))
             }
         }
     }
@@ -172,10 +172,10 @@ impl Protocol {
                         }
                     );
                 }
-                Err(NanonisError::Io {
-                    source: e,
-                    context: format!("Failed to read {} byte response body", size),
-                })
+                Err(NanonisError::from_io(
+                    e,
+                    format!("Failed to read {size} byte response body"),
+                ))
             }
         }
     }

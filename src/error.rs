@@ -110,13 +110,26 @@ impl NanonisError {
     }
 }
 
+impl NanonisError {
+    /// Create the appropriate error variant from an `io::Error`, classifying
+    /// timeouts as [`NanonisError::Timeout`] rather than [`NanonisError::Io`].
+    pub(crate) fn from_io(error: std::io::Error, context: impl Into<String>) -> Self {
+        match error.kind() {
+            std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock => {
+                NanonisError::Timeout(context.into())
+            }
+            _ => NanonisError::Io {
+                source: error,
+                context: context.into(),
+            },
+        }
+    }
+}
+
 // Allow conversion from std::io::Error
 impl From<std::io::Error> for NanonisError {
     fn from(error: std::io::Error) -> Self {
-        NanonisError::Io {
-            source: error,
-            context: "IO operation failed".to_string(),
-        }
+        Self::from_io(error, "IO operation failed")
     }
 }
 
@@ -183,5 +196,32 @@ mod tests {
         let err: NanonisError = io_err.into();
         assert!(err.is_io());
         assert!(err.to_string().contains("IO operation failed"));
+    }
+
+    #[test]
+    fn from_io_classifies_timeouts() {
+        let timed_out = std::io::Error::new(std::io::ErrorKind::TimedOut, "timed out");
+        let err = NanonisError::from_io(timed_out, "reading response");
+        assert!(err.is_timeout());
+        assert!(err.to_string().contains("reading response"));
+
+        let would_block = std::io::Error::new(std::io::ErrorKind::WouldBlock, "blocked");
+        let err = NanonisError::from_io(would_block, "writing command");
+        assert!(err.is_timeout());
+    }
+
+    #[test]
+    fn from_io_preserves_non_timeouts() {
+        let broken = std::io::Error::new(std::io::ErrorKind::BrokenPipe, "pipe");
+        let err = NanonisError::from_io(broken, "sending data");
+        assert!(err.is_io());
+        assert!(!err.is_timeout());
+    }
+
+    #[test]
+    fn from_trait_classifies_timeouts() {
+        let timed_out = std::io::Error::new(std::io::ErrorKind::TimedOut, "timed out");
+        let err: NanonisError = timed_out.into();
+        assert!(err.is_timeout(), "From<io::Error> should classify TimedOut as Timeout");
     }
 }

@@ -426,20 +426,14 @@ impl NanonisClient {
         debug!("Sending header ({} bytes)...", header.len());
         self.stream.write_all(&header).map_err(|e| {
             debug!("Failed to write header: {}", e);
-            NanonisError::Io {
-                source: e,
-                context: "Writing command header".to_string(),
-            }
+            NanonisError::from_io(e, "Writing command header")
         })?;
 
         if !body.is_empty() {
             debug!("Sending body ({} bytes)...", body.len());
             self.stream.write_all(&body).map_err(|e| {
                 debug!("Failed to write body: {}", e);
-                NanonisError::Io {
-                    source: e,
-                    context: "Writing command body".to_string(),
-                }
+                NanonisError::from_io(e, "Writing command body")
             })?;
         }
 
