@@ -31,10 +31,14 @@ impl TCPLoggerStream {
             .parse()
             .map_err(|_| NanonisError::Protocol(format!("Invalid address: {addr}")))?;
 
-        let stream = TcpStream::connect(socket_addr).map_err(|e| NanonisError::Io {
-            source: e,
-            context: format!("Failed to connect to TCP stream at {}", socket_addr),
-        })?;
+        let connect_timeout = Duration::from_secs(10);
+        let stream =
+            TcpStream::connect_timeout(&socket_addr, connect_timeout).map_err(|e| {
+                NanonisError::from_io(
+                    e,
+                    format!("Failed to connect to TCP stream at {socket_addr}"),
+                )
+            })?;
 
         // Set read timeout for continuous reading
         stream

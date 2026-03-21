@@ -574,9 +574,18 @@ impl NanonisClient {
 impl Drop for NanonisClient {
     fn drop(&mut self) {
         if self.safe_tip_on_drop {
-            // Temporarily clear poisoned flag so safety commands can attempt to run.
-            // These are best-effort anyway (errors are ignored via `let _ =`).
-            self.poisoned = false;
+            if self.poisoned {
+                // A poisoned connection has a desynchronized TCP stream.
+                // Sending commands on it could be interpreted as garbage by
+                // the server, potentially triggering unintended hardware
+                // actions. Skip safety commands and rely on the hardware's
+                // own safe-tip protection instead.
+                warn!(
+                    "Skipping safe-tip-on-drop: connection is poisoned \
+                     (rely on Nanonis safe-tip hardware protection)"
+                );
+                return;
+            }
             use motor::{MotorDirection, MotorGroup};
             let _ = self.z_ctrl_withdraw(false, Duration::from_secs(2));
             let _ = self.motor_start_move(MotorDirection::ZMinus, 15u16, MotorGroup::Group1, false);

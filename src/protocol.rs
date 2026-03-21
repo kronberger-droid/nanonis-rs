@@ -159,19 +159,9 @@ impl Protocol {
                     e,
                     e.kind()
                 );
-                // Try to read whatever we can to diagnose the issue
-                let mut partial_buf = Vec::new();
-                if let Ok(bytes_read) = reader.read_to_end(&mut partial_buf) {
-                    debug!(
-                        "Partial read got {} bytes: {:02x?}",
-                        bytes_read,
-                        if bytes_read <= 50 {
-                            &partial_buf[..]
-                        } else {
-                            &partial_buf[..50]
-                        }
-                    );
-                }
+                // Note: do NOT call read_to_end() here for diagnostics --
+                // on a live TCP connection it blocks until the peer closes
+                // the socket, which may be never.
                 Err(NanonisError::from_io(
                     e,
                     format!("Failed to read {size} byte response body"),
