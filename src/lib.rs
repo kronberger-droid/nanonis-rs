@@ -71,6 +71,21 @@ pub use error::NanonisError;
 pub use client::{NanonisClient, NanonisClientBuilder, ConnectionConfig};
 pub use tcplogger_stream::TCPLoggerStream;
 
+// ==================== Protocol Constants ====================
+
+/// Maximum valid Nanonis signal index (0-based, 128 signals total).
+pub const MAX_SIGNAL_INDEX: u8 = 127;
+
+/// Maximum valid TCP logger channel index (0-based, 24 channels total).
+pub const MAX_TCP_CHANNEL: u8 = 23;
+
+/// Nanonis internal data acquisition base rate in Hz.
+///
+/// This is the fundamental sampling rate of the Nanonis RT engine.
+/// The effective rate seen in the TCP data stream is
+/// `BASE_ACQUISITION_RATE_HZ / oversampling`.
+pub const BASE_ACQUISITION_RATE_HZ: f64 = 2000.0;
+
 // Re-export commonly used types from the internal types module
 pub use types::{NanonisValue, Position};
 
@@ -280,3 +295,12 @@ pub mod z_spectr {
 pub mod util {
     pub use crate::client::util::*;
 }
+
+/// PLL frequency sweep types.
+pub mod pll_freq_swp {
+    pub use crate::client::pll_freq_swp::*;
+}
+
+// Note: mpass, laser, and user_in modules exist in client/ but contain
+// only NanonisClient impl blocks with no standalone public types.
+// Their methods are available directly on NanonisClient without a module import.

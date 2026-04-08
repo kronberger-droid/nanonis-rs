@@ -8,11 +8,14 @@ use serde::{Deserialize, Serialize};
 pub struct ChannelIndex(pub u8);
 
 impl ChannelIndex {
-    pub fn new(index: u8) -> Result<Self, String> {
+    pub fn new(index: u8) -> Result<Self, NanonisError> {
         if index <= 23 {
             Ok(Self(index))
         } else {
-            Err(format!("Channel index {} out of range (0-23)", index))
+            Err(NanonisError::Protocol(format!(
+                "Channel index {} out of range (0-23)",
+                index
+            )))
         }
     }
 
@@ -85,6 +88,28 @@ impl TryFrom<i32> for TCPLogStatus {
     }
 }
 
+/// Raw TCP logger frame data.
+///
+/// This type is a legacy compatibility struct. Prefer using [`SignalFrame`]
+/// from the `signals` module for streaming data, which is what
+/// [`TCPLoggerStream::read_frame`] returns.
+///
+/// [`SignalFrame`]: crate::signals::SignalFrame
+/// [`TCPLoggerStream::read_frame`]: crate::TCPLoggerStream::read_frame
+#[deprecated(
+    since = "0.4.0",
+    note = "Use SignalFrame from the signals module instead. \
+            TCPLoggerData will be removed in a future release."
+)]
+#[derive(Debug, Clone)]
+pub struct TCPLoggerData {
+    pub num_channels: u32,
+    pub oversampling: f32,
+    pub counter: u64,
+    pub state: TCPLogStatus,
+    pub data: Vec<f32>,
+}
+
 impl std::fmt::Display for TCPLogStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let status_str = match self {
@@ -99,13 +124,4 @@ impl std::fmt::Display for TCPLogStatus {
         };
         write!(f, "{}", status_str)
     }
-}
-
-#[derive(Debug, Clone)]
-pub struct TCPLoggerData {
-    pub num_channels: u32,
-    pub oversampling: f32,
-    pub counter: u64,
-    pub state: TCPLogStatus,
-    pub data: Vec<f32>,
 }

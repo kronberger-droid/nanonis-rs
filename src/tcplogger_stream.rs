@@ -86,14 +86,36 @@ impl TCPLoggerStream {
         (receiver, handle)
     }
 
-    /// Read a single data frame from the stream
+    /// Read a single data frame from the stream.
+    ///
+    /// Automatically skips the initial metadata frame (counter == 0) that
+    /// the Nanonis TCP logger sends when first started. This frame contains
+    /// signal index information rather than measurement data and is not
+    /// useful to callers.
     ///
     /// # Returns
-    /// `TCPLoggerData` containing the frame header and signal data.
+    /// A `SignalFrame` containing the frame counter and channel data.
     ///
     /// # Frame Format
-    /// Always reads 18 bytes header first, then reads data based on num_channels.
+    /// Each frame is 18 bytes header + (num_channels * 4) bytes of f32 data.
     pub fn read_frame(&mut self) -> Result<SignalFrame, NanonisError> {
+        loop {
+            let frame = self.read_frame_raw()?;
+            // The first frame after logger start has counter == 0 and carries
+            // signal index metadata, not measurement data. Skip it.
+            if frame.counter == 0 {
+                continue;
+            }
+            return Ok(frame);
+        }
+    }
+
+    /// Read a single raw frame from the stream without filtering.
+    ///
+    /// Unlike [`read_frame`], this returns every frame including the
+    /// counter-0 metadata frame. Use this only if you need to inspect
+    /// the signal index metadata.
+    pub fn read_frame_raw(&mut self) -> Result<SignalFrame, NanonisError> {
         // First read header to determine frame size
         let header_size = 18;
         self.buffer.resize(header_size, 0);

@@ -87,9 +87,17 @@ impl From<u16> for StepCount {
     }
 }
 
-impl From<u32> for StepCount {
-    fn from(steps: u32) -> Self {
-        StepCount(steps as u16)
+impl TryFrom<u32> for StepCount {
+    type Error = NanonisError;
+
+    fn try_from(steps: u32) -> Result<Self, Self::Error> {
+        let val = u16::try_from(steps).map_err(|_| {
+            NanonisError::Protocol(format!(
+                "Step count {} exceeds u16 maximum (65535)",
+                steps
+            ))
+        })?;
+        Ok(StepCount(val))
     }
 }
 
@@ -288,36 +296,6 @@ impl MotorDisplacement {
     pub fn is_zero(&self) -> bool {
         self.x == 0 && self.y == 0 && self.z == 0
     }
-
-    pub fn to_motor_movements(&self) -> Vec<(MotorDirection, u16)> {
-        let mut movements = Vec::new();
-
-        // FIRST: ZMinus movements (away from surface) for safety
-        if self.z < 0 {
-            movements.push((MotorDirection::ZMinus, (-self.z) as u16));
-        }
-
-        // SECOND: X axis movements
-        if self.x > 0 {
-            movements.push((MotorDirection::XPlus, self.x as u16));
-        } else if self.x < 0 {
-            movements.push((MotorDirection::XMinus, (-self.x) as u16));
-        }
-
-        // THIRD: Y axis movements
-        if self.y > 0 {
-            movements.push((MotorDirection::YPlus, self.y as u16));
-        } else if self.y < 0 {
-            movements.push((MotorDirection::YMinus, (-self.y) as u16));
-        }
-
-        // LAST: ZPlus movements (toward surface)
-        if self.z > 0 {
-            movements.push((MotorDirection::ZPlus, self.z as u16));
-        }
-
-        movements
-    }
 }
 
 #[cfg(test)]
@@ -391,53 +369,36 @@ mod tests {
     fn displacement_zero() {
         let d = MotorDisplacement::new(0, 0, 0);
         assert!(d.is_zero());
-        assert!(d.to_motor_movements().is_empty());
     }
 
     #[test]
     fn displacement_single_axis() {
         let d = MotorDisplacement::x_only(5);
         assert!(!d.is_zero());
-        let moves = d.to_motor_movements();
-        assert_eq!(moves, vec![(MotorDirection::XPlus, 5)]);
-
-        let d = MotorDisplacement::y_only(-3);
-        assert_eq!(d.to_motor_movements(), vec![(MotorDirection::YMinus, 3)]);
-    }
-
-    #[test]
-    fn displacement_z_minus_before_xy_z_plus_after() {
-        // Safety-critical: Z-away must come first, Z-toward must come last
-        let d = MotorDisplacement::new(2, -3, -5);
-        let moves = d.to_motor_movements();
-        assert_eq!(moves[0].0, MotorDirection::ZMinus); // first
-        assert_eq!(moves[0].1, 5);
-
-        let d = MotorDisplacement::new(2, -3, 5);
-        let moves = d.to_motor_movements();
-        assert_eq!(moves.last().unwrap().0, MotorDirection::ZPlus); // last
-        assert_eq!(moves.last().unwrap().1, 5);
-    }
-
-    #[test]
-    fn displacement_all_axes() {
-        let d = MotorDisplacement::new(-1, 2, -3);
-        let moves = d.to_motor_movements();
-        // Order: ZMinus, X, Y (no ZPlus since z < 0)
-        assert_eq!(moves.len(), 3);
-        assert_eq!(moves[0], (MotorDirection::ZMinus, 3));
-        assert_eq!(moves[1], (MotorDirection::XMinus, 1));
-        assert_eq!(moves[2], (MotorDirection::YPlus, 2));
+        assert_eq!(d.x, 5);
+        assert_eq!(d.y, 0);
+        assert_eq!(d.z, 0);
     }
 
     // ---- StepCount ----
 
     #[test]
-    fn step_count_conversions() {
+    fn step_count_from_u16() {
         let s = StepCount::from(100u16);
         assert_eq!(u16::from(s), 100);
-        // u32 truncation
-        let s = StepCount::from(65536u32); // wraps to 0
-        assert_eq!(u16::from(s), 0);
+    }
+
+    #[test]
+    fn step_count_from_u32_valid() {
+        let s = StepCount::try_from(100u32).unwrap();
+        assert_eq!(u16::from(s), 100);
+        let s = StepCount::try_from(65535u32).unwrap();
+        assert_eq!(u16::from(s), 65535);
+    }
+
+    #[test]
+    fn step_count_from_u32_overflow() {
+        assert!(StepCount::try_from(65536u32).is_err());
+        assert!(StepCount::try_from(u32::MAX).is_err());
     }
 }

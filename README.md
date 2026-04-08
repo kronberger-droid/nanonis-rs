@@ -34,7 +34,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-nanonis-rs = "0.1.0"
+nanonis-rs = "0.4.0"
 ```
 
 ### Basic Example
@@ -68,7 +68,8 @@ fn main() -> Result<(), NanonisError> {
 ### Motor Control Example
 
 ```rust
-use nanonis_rs::{NanonisClient, NanonisError, MotorDirection, MotorGroup};
+use nanonis_rs::{NanonisClient, NanonisError};
+use nanonis_rs::motor::{MotorDirection, MotorGroup};
 use std::time::Duration;
 
 fn main() -> Result<(), NanonisError> {
@@ -95,15 +96,16 @@ fn main() -> Result<(), NanonisError> {
 use nanonis_rs::TCPLoggerStream;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut stream = TCPLoggerStream::connect("192.168.1.100:6502")?;
+    // Connect to the TCP Logger data stream (separate from the control port)
+    let mut stream = TCPLoggerStream::new("192.168.1.100", 6590)?;
 
-    // Read streaming data
+    // Read streaming data (counter-0 metadata frames are filtered automatically)
     loop {
-        let data = stream.read_data()?;
-        println!("Timestamp: {}, Channels: {}",
-                 data.timestamp, data.channels.len());
+        let frame = stream.read_frame()?;
+        println!("Frame #{}: {} channels",
+                 frame.counter, frame.data.len());
 
-        // Process data...
+        // Process channel data (f32 values)...
     }
 }
 ```
@@ -164,8 +166,8 @@ The library uses typed errors via `NanonisError`:
 ```rust
 match client.bias_get() {
     Ok(bias) => println!("Bias: {} V", bias),
-    Err(NanonisError::Timeout) => eprintln!("Connection timeout"),
-    Err(NanonisError::ServerError { code, message }) => {
+    Err(NanonisError::Timeout(_)) => eprintln!("Connection timeout"),
+    Err(NanonisError::Server { code, message }) => {
         eprintln!("Server error {}: {}", code, message)
     }
     Err(e) => eprintln!("Error: {}", e),

@@ -45,7 +45,7 @@ The Nix shell provides:
 
 ## Architecture
 
-### Module Organization (v0.3.0+)
+### Module Organization (v0.3.0+, updated v0.4.0)
 
 Domain-specific types are now organized into modules for better maintainability:
 
@@ -54,7 +54,7 @@ Domain-specific types are now organized into modules for better maintainability:
 - `scan::*` - Scan types (ScanFrame, ScanAction, ScanDirection, ScanConfig)
 - `z_controller::*` - Z-controller types (ZControllerHold)
 - `bias::*` - Bias types (PulseMode)
-- `oscilloscope::*` - Oscilloscope types (TriggerMode, TriggerSlope, TriggerLevel, SampleCount, OsciTriggerMode, OversamplingIndex, TimebaseIndex, DataToGet, TriggerConfig, SignalStats, OsciData, OscilloscopeIndex)
+- `oscilloscope::*` - Oscilloscope types (TriggerMode, TriggerSlope, TriggerLevel, SampleCount, OsciTriggerMode, OversamplingIndex, TimebaseIndex, DataToGet, TriggerConfig, OsciData, OscilloscopeIndex)
 - `signals::*` - Signal types (SignalIndex, SignalFrame)
 - `tcplog::*` - TCP logger types (ChannelIndex, TCPLogStatus, TCPLoggerData)
 
@@ -90,11 +90,14 @@ Key protocol details:
 - Supports arrays: ArrayU32, ArrayI32, ArrayF32, ArrayF64, ArrayString
 - Supports 2D arrays: Array2DF32
 
-Domain-specific types are also defined here:
-- Motor control: MotorDirection, MotorGroup, MotorAxis, MovementMode
-- Scan control: ScanAction, ScanDirection, ScanFrame
-- Oscilloscope: TriggerMode, OsciData, SignalStats
-- Position: Position, Position3D, StepCount
+Domain types live in their respective modules (not in types.rs):
+- `motor::*` — MotorDirection, MotorGroup, StepCount, etc.
+- `scan::*` — ScanAction, ScanDirection, ScanFrame, etc.
+- `oscilloscope::*` — TriggerMode, OsciData, TriggerConfig, etc.
+- `signals::*` — SignalIndex, SignalFrame
+- `z_ctrl::*` — ZControllerHold, ZControllerStatus
+
+`types.rs` only contains `NanonisValue` and `Position`.
 
 ### Client Layer (`src/client/`)
 

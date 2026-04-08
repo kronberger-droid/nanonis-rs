@@ -36,20 +36,30 @@ impl From<TriggerMode> for u16 {
     }
 }
 
-impl From<u16> for TriggerMode {
-    fn from(value: u16) -> Self {
+impl TryFrom<u16> for TriggerMode {
+    type Error = NanonisError;
+
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
-            0 => TriggerMode::Immediate,
-            1 => TriggerMode::Level,
-            2 => TriggerMode::Digital,
-            _ => TriggerMode::Immediate,
+            0 => Ok(TriggerMode::Immediate),
+            1 => Ok(TriggerMode::Level),
+            2 => Ok(TriggerMode::Digital),
+            _ => Err(NanonisError::Protocol(format!(
+                "Invalid trigger mode: {}",
+                value
+            ))),
         }
     }
 }
 
-impl From<i32> for TriggerMode {
-    fn from(value: i32) -> Self {
-        TriggerMode::from(value as u16)
+impl TryFrom<i32> for TriggerMode {
+    type Error = NanonisError;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        let v = u16::try_from(value).map_err(|_| {
+            NanonisError::Protocol(format!("Invalid trigger mode: {}", value))
+        })?;
+        TriggerMode::try_from(v)
     }
 }
 
@@ -278,79 +288,22 @@ impl TriggerConfig {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct SignalStats {
-    pub mean: f64,
-    pub std_dev: f64,
-    pub relative_std: f64,
-    pub window_size: usize,
-    pub stability_method: String,
-}
-
+/// Raw oscilloscope acquisition data.
+///
+/// Contains the time base and sampled data points returned by the
+/// Nanonis oscilloscope commands. No application-level analysis
+/// fields — stability checking belongs in downstream crates.
 #[derive(Debug, Clone)]
 pub struct OsciData {
     pub t0: f64,
     pub dt: f64,
     pub size: i32,
     pub data: Vec<f64>,
-    pub signal_stats: Option<SignalStats>,
-    pub is_stable: bool,
-    pub fallback_value: Option<f64>,
 }
 
 impl OsciData {
     pub fn new(t0: f64, dt: f64, size: i32, data: Vec<f64>) -> Self {
-        Self {
-            t0,
-            dt,
-            size,
-            data,
-            signal_stats: None,
-            is_stable: true,
-            fallback_value: None,
-        }
-    }
-
-    pub fn new_with_stats(t0: f64, dt: f64, size: i32, data: Vec<f64>, stats: SignalStats) -> Self {
-        Self {
-            t0,
-            dt,
-            size,
-            data,
-            signal_stats: Some(stats),
-            is_stable: true,
-            fallback_value: None,
-        }
-    }
-
-    pub fn new_stable(t0: f64, dt: f64, size: i32, data: Vec<f64>) -> Self {
-        Self {
-            t0,
-            dt,
-            size,
-            data,
-            signal_stats: None,
-            is_stable: true,
-            fallback_value: None,
-        }
-    }
-
-    pub fn new_unstable_with_fallback(
-        t0: f64,
-        dt: f64,
-        size: i32,
-        data: Vec<f64>,
-        fallback: f64,
-    ) -> Self {
-        Self {
-            t0,
-            dt,
-            size,
-            data,
-            signal_stats: None,
-            is_stable: false,
-            fallback_value: Some(fallback),
-        }
+        Self { t0, dt, size, data }
     }
 
     pub fn values(&self) -> &[f64] {
@@ -363,14 +316,6 @@ impl OsciData {
             .enumerate()
             .map(|(i, &value)| (self.t0 + i as f64 * self.dt, value))
             .collect()
-    }
-
-    pub fn stats(&self) -> Option<&SignalStats> {
-        self.signal_stats.as_ref()
-    }
-
-    pub fn is_stable(&self) -> bool {
-        self.signal_stats.is_some()
     }
 
     pub fn duration(&self) -> f64 {
@@ -396,15 +341,14 @@ impl OsciData {
 mod tests {
     use super::*;
 
-    // ---- TriggerMode (infallible From) ----
+    // ---- TriggerMode (fallible TryFrom) ----
 
     #[test]
     fn trigger_mode_roundtrip() {
-        assert_eq!(TriggerMode::from(0u16), TriggerMode::Immediate);
-        assert_eq!(TriggerMode::from(1u16), TriggerMode::Level);
-        assert_eq!(TriggerMode::from(2u16), TriggerMode::Digital);
-        // Unknown values default to Immediate
-        assert_eq!(TriggerMode::from(99u16), TriggerMode::Immediate);
+        assert_eq!(TriggerMode::try_from(0u16).unwrap(), TriggerMode::Immediate);
+        assert_eq!(TriggerMode::try_from(1u16).unwrap(), TriggerMode::Level);
+        assert_eq!(TriggerMode::try_from(2u16).unwrap(), TriggerMode::Digital);
+        assert!(TriggerMode::try_from(99u16).is_err());
     }
 
     #[test]
@@ -416,8 +360,9 @@ mod tests {
 
     #[test]
     fn trigger_mode_from_i32() {
-        assert_eq!(TriggerMode::from(0i32), TriggerMode::Immediate);
-        assert_eq!(TriggerMode::from(1i32), TriggerMode::Level);
+        assert_eq!(TriggerMode::try_from(0i32).unwrap(), TriggerMode::Immediate);
+        assert_eq!(TriggerMode::try_from(1i32).unwrap(), TriggerMode::Level);
+        assert!(TriggerMode::try_from(-1i32).is_err());
     }
 
     // ---- TriggerSlope ----

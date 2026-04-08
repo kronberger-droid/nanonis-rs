@@ -59,19 +59,22 @@ impl NanonisClient {
         }
     }
 
-    /// Get current values of signals by index(es)
+    /// Get current values of multiple signals by index.
+    ///
+    /// Accepts raw `i32` indices for backwards compatibility. Prefer
+    /// [`signals_vals_get_by_idx`](Self::signals_vals_get_by_idx) for a
+    /// type-safe interface using `SignalIndex`.
     pub fn signals_vals_get(
         &mut self,
         signal_indexes: Vec<i32>,
         wait_for_newest_data: bool,
     ) -> Result<Vec<f32>, NanonisError> {
-        let indexes = signal_indexes;
         let wait_flag = if wait_for_newest_data { 1u32 } else { 0u32 };
 
         let result = self.quick_send(
             "Signals.ValsGet",
             vec![
-                NanonisValue::ArrayI32(indexes),
+                NanonisValue::ArrayI32(signal_indexes),
                 NanonisValue::U32(wait_flag),
             ],
             vec!["+*i", "I"],
@@ -79,8 +82,8 @@ impl NanonisClient {
         )?;
 
         if result.len() >= 2 {
-            match &result[1] {
-                NanonisValue::ArrayF32(values) => Ok(values.clone()),
+            match result.into_iter().nth(1) {
+                Some(NanonisValue::ArrayF32(values)) => Ok(values),
                 _ => Err(NanonisError::Protocol(
                     "Invalid signal values response".to_string(),
                 )),
@@ -90,6 +93,27 @@ impl NanonisClient {
                 "Incomplete signal values response".to_string(),
             ))
         }
+    }
+
+    /// Get current values of multiple signals using typed `SignalIndex`.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use nanonis_rs::NanonisClient;
+    /// use nanonis_rs::signals::SignalIndex;
+    ///
+    /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
+    /// let indices = [SignalIndex::new(0), SignalIndex::new(1), SignalIndex::new(76)];
+    /// let values = client.signals_vals_get_by_idx(&indices, true)?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn signals_vals_get_by_idx(
+        &mut self,
+        signal_indexes: &[SignalIndex],
+        wait_for_newest_data: bool,
+    ) -> Result<Vec<f32>, NanonisError> {
+        let indexes: Vec<i32> = signal_indexes.iter().map(|s| i32::from(*s)).collect();
+        self.signals_vals_get(indexes, wait_for_newest_data)
     }
 
     /// Get the current value of a single selected signal.

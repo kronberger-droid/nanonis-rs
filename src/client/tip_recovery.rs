@@ -19,7 +19,14 @@ pub struct TipShaperConfig {
     pub restore_feedback: bool,
 }
 
-/// Return type for tip shaper properties
+/// Raw return type for tip shaper properties.
+///
+/// Prefer [`NanonisClient::tip_shaper_config_get`] which returns the
+/// type-safe [`TipShaperConfig`] struct with `Duration` fields.
+#[deprecated(
+    since = "0.4.0",
+    note = "Use tip_shaper_config_get() which returns TipShaperConfig instead."
+)]
 pub type TipShaperProps = (f32, u32, f32, f32, f32, f32, f32, f32, f32, f32, u32);
 
 impl NanonisClient {
@@ -354,6 +361,11 @@ impl NanonisClient {
     ///          switch_delay + lift_time1 + settling + lift_time2 + end_wait);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
+    #[deprecated(
+        since = "0.4.0",
+        note = "Use tip_shaper_config_get() which returns TipShaperConfig instead."
+    )]
+    #[allow(deprecated)]
     pub fn tip_shaper_props_get(&mut self) -> Result<TipShaperProps, NanonisError> {
         let result = self.quick_send(
             "TipShaper.PropsGet",
@@ -419,6 +431,10 @@ impl NanonisClient {
         )?;
 
         if result.len() >= 11 {
+            // Nanonis protocol convention: for change_bias and restore_feedback,
+            // 0 = "yes/enabled" and 1 = "no/disabled". This is inverted relative
+            // to typical boolean conventions but matches the Nanonis TCP protocol
+            // documentation (see TCPProtocol_SPM.pdf, TipShaper.PropsGet).
             let restore_feedback = match result[10].as_u32()? {
                 0 => true,
                 1 => false,

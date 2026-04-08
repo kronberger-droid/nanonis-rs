@@ -62,9 +62,10 @@ impl NanonisClient {
         }
     }
 
-    /// Set the trigger configuration in the Oscilloscope 1-Channel
-    /// trigger_mode: 0 = Immediate, 1 = Level, 2 = Auto
-    /// trigger_slope: 0 = Falling, 1 = Rising
+    /// Set the trigger configuration in the Oscilloscope 1-Channel.
+    ///
+    /// Prefer [`osci1t_trig_set_typed`](Self::osci1t_trig_set_typed) for a
+    /// type-safe interface using `OsciTriggerMode` and `TriggerSlope` enums.
     pub fn osci1t_trig_set(
         &mut self,
         trigger_mode: u16,
@@ -86,8 +87,11 @@ impl NanonisClient {
         Ok(())
     }
 
-    /// Get the trigger configuration in the Oscilloscope 1-Channel
-    /// Returns: (trigger_mode, trigger_slope, trigger_level, trigger_hysteresis)
+    /// Get the trigger configuration in the Oscilloscope 1-Channel (raw u16).
+    ///
+    /// Returns raw protocol values. Prefer
+    /// [`osci1t_trig_get_typed`](Self::osci1t_trig_get_typed) for type-safe
+    /// `OsciTriggerMode` and `TriggerSlope` values.
     pub fn osci1t_trig_get(&mut self) -> Result<(u16, u16, f64, f64), NanonisError> {
         let result = self.quick_send(
             "Osci1T.TrigGet",
@@ -111,6 +115,53 @@ impl NanonisClient {
                 "Invalid trigger configuration response".to_string(),
             ))
         }
+    }
+
+    /// Set the trigger configuration using typed enums.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use nanonis_rs::NanonisClient;
+    /// use nanonis_rs::oscilloscope::{OsciTriggerMode, TriggerSlope};
+    ///
+    /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
+    /// client.osci1t_trig_set_typed(
+    ///     OsciTriggerMode::Level,
+    ///     TriggerSlope::Rising,
+    ///     0.5,   // trigger level
+    ///     0.1,   // hysteresis
+    /// )?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn osci1t_trig_set_typed(
+        &mut self,
+        mode: super::types::OsciTriggerMode,
+        slope: super::types::TriggerSlope,
+        level: f64,
+        hysteresis: f64,
+    ) -> Result<(), NanonisError> {
+        self.osci1t_trig_set(u16::from(mode), u16::from(slope), level, hysteresis)
+    }
+
+    /// Get the trigger configuration as typed enums.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use nanonis_rs::NanonisClient;
+    ///
+    /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
+    /// let (mode, slope, level, hysteresis) = client.osci1t_trig_get_typed()?;
+    /// println!("Mode: {:?}, Slope: {:?}, Level: {}", mode, slope, level);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn osci1t_trig_get_typed(
+        &mut self,
+    ) -> Result<(super::types::OsciTriggerMode, super::types::TriggerSlope, f64, f64), NanonisError>
+    {
+        let (mode_raw, slope_raw, level, hysteresis) = self.osci1t_trig_get()?;
+        let mode = super::types::OsciTriggerMode::try_from(mode_raw)?;
+        let slope = super::types::TriggerSlope::try_from(slope_raw)?;
+        Ok((mode, slope, level, hysteresis))
     }
 
     /// Start the Oscilloscope 1-Channel
