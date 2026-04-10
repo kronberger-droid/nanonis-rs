@@ -1,67 +1,31 @@
 {
-  description = "Rust development shell with GUI support";
+  description = "nanonis-rs – Rust library";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    fenix.url = "github:nix-community/fenix";
-    rust-overlay.url = "github:oxalica/rust-overlay";
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    flake-utils,
-    fenix,
-    rust-overlay,
-    ...
-  }:
-    flake-utils.lib.eachDefaultSystem (
-      system: let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [fenix.overlays.default rust-overlay.overlays.default];
-        };
-
-        # Rust toolchain configuration
-        # Pin to Rust 1.89.0
-        rustTools = {
-          stable = pkgs.rust-bin.stable."1.89.0".default.override {
-            extensions = ["rust-src"];
-          };
-          analyzer = pkgs.rust-bin.stable."1.89.0".rust-analyzer;
-        };
-
-        # Development tools
-        devTools = with pkgs; [
-          cargo-expand
-          rusty-man
-          pkg-config
+  outputs = {nixpkgs, fenix, ...}: let
+    forAllSystems = nixpkgs.lib.genAttrs ["x86_64-linux" "aarch64-linux"];
+  in {
+    devShells = forAllSystems (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
+      toolchain = fenix.packages.${system}.stable.withComponents [
+        "cargo" "clippy" "rust-src" "rustc" "rustfmt"
+      ];
+    in {
+      default = pkgs.mkShell {
+        nativeBuildInputs = [
+          toolchain
+          fenix.packages.${system}.rust-analyzer
+          pkgs.pkg-config
+          pkgs.cargo-expand
         ];
-
-        # Core Rust development dependencies
-        rustDeps =
-          [
-            rustTools.stable
-            rustTools.analyzer
-          ]
-          ++ devTools;
-
-        # Base shell configuration
-        baseShellHook = ''
-          echo "Using Rust toolchain: $(rustc --version)"
-          export CARGO_HOME="$HOME/.cargo"
-          export RUSTUP_HOME="$HOME/.rustup"
-
-
-          mkdir -p "$CARGO_HOME" "$RUSTUP_HOME"
-        '';
-      in {
-        devShells.default = pkgs.mkShell {
-          name = "rust dev shell (clean)";
-          buildInputs = rustDeps;
-          shellHook = baseShellHook;
-        };
-      }
-    );
+      };
+    });
+  };
 }
