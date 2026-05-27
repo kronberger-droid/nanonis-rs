@@ -6,6 +6,85 @@ use crate::error::NanonisError;
 use crate::types::{NanonisValue, Position};
 use std::time::Duration;
 
+use crate::protocol::Protocol;
+
+/// `Scan.PropsGet` reply layout for the newest documented firmware:
+/// continuous, bouncy, autosave, series-name(size+str), comment(size+str),
+/// modules-names(size+count+array), num-params-per-module(size+array),
+/// parameters(rows+cols+2-D array), autopaste.
+const SCAN_PROPS_FULL: &[&str] = &[
+    "I", "I", "I", "i", "*-c", "i", "*-c", "i", "i", "*+c", "i", "*+i", "i", "i", "*+c", "I",
+];
+
+/// Core fields returned by every firmware version. Older Nanonis releases omit
+/// the modules-params block and autopaste that were added later (see the
+/// TCPProtocol_SPM.pdf changelog), so their reply ends here.
+const SCAN_PROPS_CORE: &[&str] = &["I", "I", "I", "i", "*-c", "i", "*-c"];
+
+/// Parse a `Scan.PropsGet` response body, tolerant of older firmware.
+///
+/// The reply layout is purely additive across Nanonis versions, so we try the
+/// full documented layout first and fall back to the core fields when the body
+/// is too short. Without this, the cursor overruns the data into the error
+/// trailer and the read fails with `UnexpectedEof`.
+fn parse_scan_props(body: &[u8]) -> Result<ScanProps, NanonisError> {
+    let (result, data_end, full) = match Protocol::parse_response(body, SCAN_PROPS_FULL) {
+        Ok((values, cursor)) => (values, cursor, true),
+        Err(_) => {
+            let (values, cursor) = Protocol::parse_response(body, SCAN_PROPS_CORE)?;
+            (values, cursor, false)
+        }
+    };
+
+    // The error trailer sits immediately after the data we consumed.
+    Protocol::parse_error_info(body, data_end)?;
+
+    let continuous_scan = result[0].as_u32()? == 1;
+    let bouncy_scan = result[1].as_u32()? == 1;
+    let autosave = AutosaveMode::try_from(result[2].as_u32()?)?;
+    let series_name = result[4].as_string()?.to_string();
+    let comment = result[6].as_string()?.to_string();
+
+    let (modules_names, num_params_per_module, parameters, autopaste) = if full {
+        let modules_names = result[9].as_string_array()?.to_vec();
+        let num_params_per_module = result[11].as_i32_array()?.to_vec();
+        let rows = result[12].as_i32()?;
+        let cols = result[13].as_i32()?;
+        let params_flat = result[14].as_string_array()?;
+
+        // Convert flat array to 2D (rows x cols)
+        let mut parameters = Vec::new();
+        for row in 0..rows as usize {
+            let mut row_params = Vec::new();
+            for col in 0..cols as usize {
+                let idx = row * (cols as usize) + col;
+                if idx < params_flat.len() {
+                    row_params.push(params_flat[idx].clone());
+                }
+            }
+            parameters.push(row_params);
+        }
+
+        let autopaste = AutopasteMode::try_from(result[15].as_u32()?)?;
+        (modules_names, num_params_per_module, parameters, autopaste)
+    } else {
+        // Older firmware does not report these fields; leave them empty.
+        (Vec::new(), Vec::new(), Vec::new(), AutopasteMode::Off)
+    };
+
+    Ok(ScanProps {
+        continuous_scan,
+        bouncy_scan,
+        autosave,
+        series_name,
+        comment,
+        modules_names,
+        num_params_per_module,
+        parameters,
+        autopaste,
+    })
+}
+
 impl NanonisClient {
     /// Start, stop, pause or resume a scan
     pub fn scan_action(
@@ -529,80 +608,11 @@ impl NanonisClient {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn scan_props_get(&mut self) -> Result<ScanProps, NanonisError> {
-        let result = self.quick_send(
-            "Scan.PropsGet",
-            vec![],
-            vec![],
-            vec!["I", "I", "I", "i", "*-c", "i", "*-c", "i", "i", "*+c", "i", "*+i", "i", "i", "*+c", "I"],
-        )?;
-
-        if result.len() >= 16 {
-            // Index 0: Continuous scan (0=Off, 1=On)
-            let continuous_scan = result[0].as_u32()? == 1;
-
-            // Index 1: Bouncy scan (0=Off, 1=On)
-            let bouncy_scan = result[1].as_u32()? == 1;
-
-            // Index 2: Autosave (0=All, 1=Next, 2=Off)
-            let autosave = AutosaveMode::try_from(result[2].as_u32()?)?;
-
-            // Index 3: series_name size (i)
-            // Index 4: series_name string (*-c)
-            let series_name = result[4].as_string()?.to_string();
-
-            // Index 5: comment size (i)
-            // Index 6: comment string (*-c)
-            let comment = result[6].as_string()?.to_string();
-
-            // Index 7: modules_names size (i)
-            // Index 8: modules_names count (i)
-            // Index 9: modules_names array (*+c)
-            let modules_names = result[9].as_string_array()?.to_vec();
-
-            // Index 10: num_params_per_module array size (i)
-            // Index 11: num_params_per_module array (*+i)
-            let num_params_per_module = result[11].as_i32_array()?.to_vec();
-
-            // Index 12: parameters rows (i)
-            let rows = result[12].as_i32()?;
-            // Index 13: parameters columns (i)
-            let cols = result[13].as_i32()?;
-            // Index 14: parameters 2D array (*+c)
-            let params_flat = result[14].as_string_array()?;
-
-            // Convert flat array to 2D (rows x cols)
-            let mut parameters = Vec::new();
-            for row in 0..rows as usize {
-                let mut row_params = Vec::new();
-                for col in 0..cols as usize {
-                    let idx = row * (cols as usize) + col;
-                    if idx < params_flat.len() {
-                        row_params.push(params_flat[idx].clone());
-                    }
-                }
-                parameters.push(row_params);
-            }
-
-            // Index 15: Autopaste (0=All, 1=Next, 2=Off)
-            let autopaste = AutopasteMode::try_from(result[15].as_u32()?)?;
-
-            Ok(ScanProps {
-                continuous_scan,
-                bouncy_scan,
-                autosave,
-                series_name,
-                comment,
-                modules_names,
-                num_params_per_module,
-                parameters,
-                autopaste,
-            })
-        } else {
-            Err(NanonisError::Protocol(format!(
-                "Invalid scan props response: expected 16 values, got {}",
-                result.len()
-            )))
-        }
+        // Read the raw body and parse defensively: the reply layout depends on
+        // the Nanonis firmware version (older firmware omits the modules-params
+        // block and autopaste). See `parse_scan_props`.
+        let body = self.quick_send_raw("Scan.PropsGet", vec![], vec![])?;
+        parse_scan_props(&body)
     }
 
     /// Set scan properties configuration.
@@ -711,5 +721,76 @@ impl NanonisClient {
     pub fn scan_background_delete(&mut self) -> Result<(), NanonisError> {
         self.quick_send("Scan.BackgroundDelete", vec![], vec![], vec![])?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Big-endian encoders for building synthetic Scan.PropsGet response bodies.
+    fn u32be(v: u32, out: &mut Vec<u8>) {
+        out.extend_from_slice(&v.to_be_bytes());
+    }
+    fn i32be(v: i32, out: &mut Vec<u8>) {
+        out.extend_from_slice(&v.to_be_bytes());
+    }
+    fn sized_str(s: &str, out: &mut Vec<u8>) {
+        i32be(s.len() as i32, out);
+        out.extend_from_slice(s.as_bytes());
+    }
+    // 8-byte success trailer: error status = 0, description size = 0.
+    fn ok_trailer(out: &mut Vec<u8>) {
+        i32be(0, out);
+        i32be(0, out);
+    }
+
+    /// Older firmware: the reply ends after the comment (no modules-params
+    /// block, no autopaste). This is the layout that previously overran into
+    /// the error trailer and failed with `UnexpectedEof`.
+    #[test]
+    fn parse_scan_props_core_only_layout() {
+        let mut body = Vec::new();
+        u32be(1, &mut body); // continuous = On
+        u32be(0, &mut body); // bouncy = Off
+        u32be(2, &mut body); // autosave = Off
+        sized_str("scan", &mut body);
+        sized_str("hello", &mut body);
+        ok_trailer(&mut body);
+
+        let props = parse_scan_props(&body).expect("core layout should parse");
+        assert!(props.continuous_scan);
+        assert!(!props.bouncy_scan);
+        assert_eq!(props.autosave, AutosaveMode::Off);
+        assert_eq!(props.series_name, "scan");
+        assert_eq!(props.comment, "hello");
+        assert!(props.modules_names.is_empty());
+        assert!(props.parameters.is_empty());
+    }
+
+    /// Newer firmware: full documented layout, with empty modules/params arrays.
+    #[test]
+    fn parse_scan_props_full_layout() {
+        let mut body = Vec::new();
+        u32be(0, &mut body); // continuous = Off
+        u32be(1, &mut body); // bouncy = On
+        u32be(0, &mut body); // autosave = All
+        sized_str("img", &mut body);
+        sized_str("", &mut body);
+        i32be(0, &mut body); // modules names size (bytes)
+        i32be(0, &mut body); // modules names count -> 0 strings
+        i32be(0, &mut body); // num-params-per-module count -> 0 ints
+        i32be(0, &mut body); // parameters rows
+        i32be(0, &mut body); // parameters cols -> 0 strings
+        u32be(2, &mut body); // autopaste = Off
+        ok_trailer(&mut body);
+
+        let props = parse_scan_props(&body).expect("full layout should parse");
+        assert!(!props.continuous_scan);
+        assert!(props.bouncy_scan);
+        assert_eq!(props.autosave, AutosaveMode::All);
+        assert_eq!(props.series_name, "img");
+        assert_eq!(props.comment, "");
+        assert_eq!(props.autopaste, AutopasteMode::Off);
     }
 }

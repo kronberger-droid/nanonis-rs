@@ -438,6 +438,47 @@ impl NanonisClient {
         argument_types: Vec<&str>,
         return_types: Vec<&str>,
     ) -> Result<Vec<NanonisValue>, NanonisError> {
+        debug!("Return types: {:?}", return_types);
+        let response_body = self.quick_send_raw(command, args, argument_types)?;
+
+        // Parse response with error checking
+        debug!("Parsing response with types: {:?}", return_types);
+        let result = Protocol::parse_response_with_error_check(&response_body, &return_types)
+            .map_err(|e| {
+                debug!("Failed to parse response: {}", e);
+                e
+            })?;
+
+        // Validate that the parsed result has the expected number of values.
+        // parse_response should always produce exactly one value per type descriptor,
+        // but this guard prevents panics in callers if there's ever a mismatch.
+        if result.len() < return_types.len() {
+            return Err(NanonisError::Protocol(format!(
+                "{command}: expected {} return values, got {}",
+                return_types.len(),
+                result.len()
+            )));
+        }
+
+        debug!("=== COMMAND SUCCESS: {} ===", command);
+        debug!("Parsed result: {:?}", result);
+
+        Ok(result)
+    }
+
+    /// Send a command and return the raw, unparsed response body.
+    ///
+    /// This is the lower half of [`quick_send`]: it serializes and sends the
+    /// command, then reads the full response body **without** applying a
+    /// return-type format string. Useful for commands whose reply layout
+    /// varies across Nanonis firmware versions (e.g. `Scan.PropsGet`), where
+    /// the caller needs to parse the body defensively.
+    pub fn quick_send_raw(
+        &mut self,
+        command: &str,
+        args: Vec<NanonisValue>,
+        argument_types: Vec<&str>,
+    ) -> Result<Vec<u8>, NanonisError> {
         // Refuse commands on a poisoned connection to prevent desynchronized reads
         if self.poisoned {
             return Err(NanonisError::Io {
@@ -454,7 +495,6 @@ impl NanonisClient {
         debug!("=== COMMAND START: {} ===", command);
         debug!("Arguments: {:?}", args);
         debug!("Argument types: {:?}", argument_types);
-        debug!("Return types: {:?}", return_types);
 
         // Serialize arguments
         let mut body = Vec::new();
@@ -545,29 +585,7 @@ impl NanonisClient {
             Vec::new()
         };
 
-        // Parse response with error checking
-        debug!("Parsing response with types: {:?}", return_types);
-        let result = Protocol::parse_response_with_error_check(&response_body, &return_types)
-            .map_err(|e| {
-                debug!("Failed to parse response: {}", e);
-                e
-            })?;
-
-        // Validate that the parsed result has the expected number of values.
-        // parse_response should always produce exactly one value per type descriptor,
-        // but this guard prevents panics in callers if there's ever a mismatch.
-        if result.len() < return_types.len() {
-            return Err(NanonisError::Protocol(format!(
-                "{command}: expected {} return values, got {}",
-                return_types.len(),
-                result.len()
-            )));
-        }
-
-        debug!("=== COMMAND SUCCESS: {} ===", command);
-        debug!("Parsed result: {:?}", result);
-
-        Ok(result)
+        Ok(response_body)
     }
 }
 
