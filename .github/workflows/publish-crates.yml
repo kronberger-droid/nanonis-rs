@@ -1,0 +1,32 @@
+# Publishes nanonis-rs to crates.io on a version tag.
+#
+# Tags only -- never on PRs or branch pushes, because `cargo publish` is
+# irreversible (a published version can't be replaced or reused).
+#
+# Requires a CARGO_REGISTRY_TOKEN secret in the repository settings
+# (Settings > Secrets and variables > Actions). Generate it at
+# https://crates.io/settings/tokens with the "publish-update" scope.
+#
+# NOTE: there is no cargo-dist plan step here (this crate ships no binaries),
+# so the published version is simply whatever is in Cargo.toml -- make sure the
+# tag you push matches the `version` field.
+name: Publish to crates.io
+
+on:
+  push:
+    tags:
+      - '**[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      # --locked builds against the committed Cargo.lock.
+      - run: cargo publish --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
