@@ -11,6 +11,17 @@ categories = ["science", "api-bindings"]
 readme = "README.md"
 homepage = "https://github.com/kronberger-droid/nanonis-rs"
 documentation = "https://docs.rs/nanonis-rs"
+# Keep the published crate lean: ship only source + docs, not dev/CI files
+# or the 3.6 MB protocol manual.
+exclude = [
+    "TCPProtocol_SPM.pdf",
+    "CLAUDE.md",
+    ".github/",
+    "flake.nix",
+    "flake.lock",
+    "rustfmt.toml",
+    ".gitignore",
+]
 
 [dependencies]
 byteorder = "1.5"
