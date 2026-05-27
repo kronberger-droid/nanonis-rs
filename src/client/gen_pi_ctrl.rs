@@ -350,8 +350,12 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn gen_pi_ctrl_props_get(&mut self) -> Result<GenPICtrlProps, NanonisError> {
-        let result =
-            self.quick_send("GenPICtrl.PropsGet", vec![], vec![], vec!["f", "f", "f", "H"])?;
+        let result = self.quick_send(
+            "GenPICtrl.PropsGet",
+            vec![],
+            vec![],
+            vec!["f", "f", "f", "H"],
+        )?;
 
         if result.len() >= 4 {
             Ok(GenPICtrlProps {

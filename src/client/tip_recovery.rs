@@ -438,17 +438,21 @@ impl NanonisClient {
             let restore_feedback = match result[10].as_u32()? {
                 0 => true,
                 1 => false,
-                v => return Err(NanonisError::Protocol(format!(
-                    "Invalid restore_feedback value: {v}, expected 0 or 1"
-                ))),
+                v => {
+                    return Err(NanonisError::Protocol(format!(
+                        "Invalid restore_feedback value: {v}, expected 0 or 1"
+                    )));
+                }
             };
 
             let change_bias = match result[1].as_u32()? {
                 0 => true,
                 1 => false,
-                v => return Err(NanonisError::Protocol(format!(
-                    "Invalid change_bias value: {v}, expected 0 or 1"
-                ))),
+                v => {
+                    return Err(NanonisError::Protocol(format!(
+                        "Invalid change_bias value: {v}, expected 0 or 1"
+                    )));
+                }
             };
 
             Ok(TipShaperConfig {

@@ -32,13 +32,12 @@ impl TCPLoggerStream {
             .map_err(|_| NanonisError::Protocol(format!("Invalid address: {addr}")))?;
 
         let connect_timeout = Duration::from_secs(10);
-        let stream =
-            TcpStream::connect_timeout(&socket_addr, connect_timeout).map_err(|e| {
-                NanonisError::from_io(
-                    e,
-                    format!("Failed to connect to TCP stream at {socket_addr}"),
-                )
-            })?;
+        let stream = TcpStream::connect_timeout(&socket_addr, connect_timeout).map_err(|e| {
+            NanonisError::from_io(
+                e,
+                format!("Failed to connect to TCP stream at {socket_addr}"),
+            )
+        })?;
 
         // Set read timeout for continuous reading
         stream
@@ -66,19 +65,24 @@ impl TCPLoggerStream {
     /// - A `read_frame` call fails (returns `Err(NanonisError)`)
     pub fn spawn_background_reader(
         mut self,
-    ) -> (mpsc::Receiver<SignalFrame>, JoinHandle<Result<(), NanonisError>>) {
+    ) -> (
+        mpsc::Receiver<SignalFrame>,
+        JoinHandle<Result<(), NanonisError>>,
+    ) {
         let (sender, receiver) = mpsc::channel();
 
         let handle = thread::Builder::new()
             .name("tcp-logger-reader".into())
-            .spawn(move || loop {
-                match self.read_frame() {
-                    Ok(frame) => {
-                        if sender.send(frame).is_err() {
-                            return Ok(()); // receiver dropped, clean shutdown
+            .spawn(move || {
+                loop {
+                    match self.read_frame() {
+                        Ok(frame) => {
+                            if sender.send(frame).is_err() {
+                                return Ok(()); // receiver dropped, clean shutdown
+                            }
                         }
+                        Err(e) => return Err(e),
                     }
-                    Err(e) => return Err(e),
                 }
             })
             .expect("failed to spawn tcp-logger-reader thread");
@@ -140,9 +144,7 @@ impl TCPLoggerStream {
         let data_size = (num_channels as usize)
             .checked_mul(4) // 4 bytes per f32
             .ok_or_else(|| {
-                NanonisError::Protocol(format!(
-                    "Channel count overflow: {num_channels} channels"
-                ))
+                NanonisError::Protocol(format!("Channel count overflow: {num_channels} channels"))
             })?;
         self.buffer.resize(data_size, 0);
 

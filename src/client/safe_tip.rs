@@ -29,10 +29,7 @@ impl NanonisClient {
     /// client.safe_tip_on_off_set(false)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn safe_tip_on_off_set(
-        &mut self,
-        safe_tip_on: bool,
-    ) -> Result<(), NanonisError> {
+    pub fn safe_tip_on_off_set(&mut self, safe_tip_on: bool) -> Result<(), NanonisError> {
         let status = if safe_tip_on { 1u16 } else { 2u16 };
 
         self.quick_send(
@@ -69,8 +66,7 @@ impl NanonisClient {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn safe_tip_on_off_get(&mut self) -> Result<bool, NanonisError> {
-        let result =
-            self.quick_send("SafeTip.OnOffGet", vec![], vec![], vec!["H"])?;
+        let result = self.quick_send("SafeTip.OnOffGet", vec![], vec![], vec!["H"])?;
 
         match result.first() {
             Some(value) => Ok(value.as_u16()? == 1),
@@ -108,8 +104,7 @@ impl NanonisClient {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn safe_tip_signal_get(&mut self) -> Result<f32, NanonisError> {
-        let result =
-            self.quick_send("SafeTip.SignalGet", vec![], vec![], vec!["f"])?;
+        let result = self.quick_send("SafeTip.SignalGet", vec![], vec![], vec!["f"])?;
 
         match result.first() {
             Some(value) => Ok(value.as_f32()?),
@@ -204,12 +199,7 @@ impl NanonisClient {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn safe_tip_props_get(&mut self) -> Result<(bool, bool, f32), NanonisError> {
-        let result = self.quick_send(
-            "SafeTip.PropsGet",
-            vec![],
-            vec![],
-            vec!["H", "H", "f"],
-        )?;
+        let result = self.quick_send("SafeTip.PropsGet", vec![], vec![], vec!["H", "H", "f"])?;
 
         if result.len() >= 3 {
             let auto_recovery = result[0].as_u16()? == 1;
@@ -251,10 +241,7 @@ impl NanonisClient {
     /// client.z_ctrl_tip_lift_set(500e-9)?;  // 500 nm lift
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn z_ctrl_tip_lift_set(
-        &mut self,
-        tip_lift_m: f32,
-    ) -> Result<(), NanonisError> {
+    pub fn z_ctrl_tip_lift_set(&mut self, tip_lift_m: f32) -> Result<(), NanonisError> {
         self.quick_send(
             "ZCtrl.TipLiftSet",
             vec![NanonisValue::F32(tip_lift_m)],
@@ -291,8 +278,7 @@ impl NanonisClient {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn z_ctrl_tip_lift_get(&mut self) -> Result<f32, NanonisError> {
-        let result =
-            self.quick_send("ZCtrl.TipLiftGet", vec![], vec![], vec!["f"])?;
+        let result = self.quick_send("ZCtrl.TipLiftGet", vec![], vec![], vec!["f"])?;
 
         match result.first() {
             Some(value) => Ok(value.as_f32()?),

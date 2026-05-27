@@ -86,12 +86,30 @@ mod tests {
 
     #[test]
     fn z_controller_status_valid() {
-        assert_eq!(ZControllerStatus::try_from(1u16).unwrap(), ZControllerStatus::Off);
-        assert_eq!(ZControllerStatus::try_from(2u16).unwrap(), ZControllerStatus::On);
-        assert_eq!(ZControllerStatus::try_from(3u16).unwrap(), ZControllerStatus::Hold);
-        assert_eq!(ZControllerStatus::try_from(4u16).unwrap(), ZControllerStatus::SwitchingOff);
-        assert_eq!(ZControllerStatus::try_from(5u16).unwrap(), ZControllerStatus::SafeTip);
-        assert_eq!(ZControllerStatus::try_from(6u16).unwrap(), ZControllerStatus::Withdrawing);
+        assert_eq!(
+            ZControllerStatus::try_from(1u16).unwrap(),
+            ZControllerStatus::Off
+        );
+        assert_eq!(
+            ZControllerStatus::try_from(2u16).unwrap(),
+            ZControllerStatus::On
+        );
+        assert_eq!(
+            ZControllerStatus::try_from(3u16).unwrap(),
+            ZControllerStatus::Hold
+        );
+        assert_eq!(
+            ZControllerStatus::try_from(4u16).unwrap(),
+            ZControllerStatus::SwitchingOff
+        );
+        assert_eq!(
+            ZControllerStatus::try_from(5u16).unwrap(),
+            ZControllerStatus::SafeTip
+        );
+        assert_eq!(
+            ZControllerStatus::try_from(6u16).unwrap(),
+            ZControllerStatus::Withdrawing
+        );
     }
 
     #[test]

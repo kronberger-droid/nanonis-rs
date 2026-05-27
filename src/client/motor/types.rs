@@ -92,10 +92,7 @@ impl TryFrom<u32> for StepCount {
 
     fn try_from(steps: u32) -> Result<Self, Self::Error> {
         let val = u16::try_from(steps).map_err(|_| {
-            NanonisError::Protocol(format!(
-                "Step count {} exceeds u16 maximum (65535)",
-                steps
-            ))
+            NanonisError::Protocol(format!("Step count {} exceeds u16 maximum (65535)", steps))
         })?;
         Ok(StepCount(val))
     }
@@ -307,9 +304,12 @@ mod tests {
     #[test]
     fn motor_direction_roundtrip() {
         for (dir, val) in [
-            (MotorDirection::XPlus, 0), (MotorDirection::XMinus, 1),
-            (MotorDirection::YPlus, 2), (MotorDirection::YMinus, 3),
-            (MotorDirection::ZPlus, 4), (MotorDirection::ZMinus, 5),
+            (MotorDirection::XPlus, 0),
+            (MotorDirection::XMinus, 1),
+            (MotorDirection::YPlus, 2),
+            (MotorDirection::YMinus, 3),
+            (MotorDirection::ZPlus, 4),
+            (MotorDirection::ZMinus, 5),
         ] {
             assert_eq!(u32::from(dir), val);
             assert_eq!(MotorDirection::try_from(val).unwrap(), dir);
@@ -338,7 +338,10 @@ mod tests {
     #[test]
     fn motor_axis_roundtrip() {
         for (axis, val) in [
-            (MotorAxis::All, 0u16), (MotorAxis::X, 1), (MotorAxis::Y, 2), (MotorAxis::Z, 3),
+            (MotorAxis::All, 0u16),
+            (MotorAxis::X, 1),
+            (MotorAxis::Y, 2),
+            (MotorAxis::Z, 3),
         ] {
             assert_eq!(u16::from(axis), val);
             assert_eq!(MotorAxis::try_from(val).unwrap(), axis);
@@ -358,8 +361,14 @@ mod tests {
     fn movement_mode_roundtrip() {
         assert_eq!(u32::from(MovementMode::Relative), 0);
         assert_eq!(u32::from(MovementMode::Absolute), 1);
-        assert_eq!(MovementMode::try_from(0u32).unwrap(), MovementMode::Relative);
-        assert_eq!(MovementMode::try_from(1u32).unwrap(), MovementMode::Absolute);
+        assert_eq!(
+            MovementMode::try_from(0u32).unwrap(),
+            MovementMode::Relative
+        );
+        assert_eq!(
+            MovementMode::try_from(1u32).unwrap(),
+            MovementMode::Absolute
+        );
         assert!(MovementMode::try_from(2u32).is_err());
     }
 

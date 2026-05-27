@@ -370,12 +370,7 @@ impl NanonisClient {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn signals_in_slots_get(&mut self) -> Result<Vec<i32>, NanonisError> {
-        let result = self.quick_send(
-            "Signals.InSlotsGet",
-            vec![],
-            vec![],
-            vec!["i", "*i"],
-        )?;
+        let result = self.quick_send("Signals.InSlotsGet", vec![], vec![], vec!["i", "*i"])?;
 
         if result.len() >= 2 {
             Ok(result[1].as_i32_array()?.to_vec())

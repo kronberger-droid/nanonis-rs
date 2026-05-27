@@ -29,10 +29,7 @@ impl NanonisClient {
 
     /// Set the timebase in the Oscilloscope 1-Channel
     /// Use osci1t_timebase_get() first to obtain available timebases, then use the index
-    pub fn osci1t_timebase_set(
-        &mut self,
-        timebase_index: i32,
-    ) -> Result<(), NanonisError> {
+    pub fn osci1t_timebase_set(&mut self, timebase_index: i32) -> Result<(), NanonisError> {
         self.quick_send(
             "Osci1T.TimebaseSet",
             vec![NanonisValue::I32(timebase_index)],
@@ -45,12 +42,7 @@ impl NanonisClient {
     /// Get the timebase in the Oscilloscope 1-Channel
     /// Returns: (timebase_index, timebases_array)
     pub fn osci1t_timebase_get(&mut self) -> Result<(i32, Vec<f32>), NanonisError> {
-        let result = self.quick_send(
-            "Osci1T.TimebaseGet",
-            vec![],
-            vec![],
-            vec!["i", "i", "*f"],
-        )?;
+        let result = self.quick_send("Osci1T.TimebaseGet", vec![], vec![], vec!["i", "i", "*f"])?;
         if result.len() >= 3 {
             let timebase_index = result[0].as_i32()?;
             let timebases = result[2].as_f32_array()?.to_vec();
@@ -93,12 +85,7 @@ impl NanonisClient {
     /// [`osci1t_trig_get_typed`](Self::osci1t_trig_get_typed) for type-safe
     /// `OsciTriggerMode` and `TriggerSlope` values.
     pub fn osci1t_trig_get(&mut self) -> Result<(u16, u16, f64, f64), NanonisError> {
-        let result = self.quick_send(
-            "Osci1T.TrigGet",
-            vec![],
-            vec![],
-            vec!["H", "H", "d", "d"],
-        )?;
+        let result = self.quick_send("Osci1T.TrigGet", vec![], vec![], vec!["H", "H", "d", "d"])?;
         if result.len() >= 4 {
             let trigger_mode = result[0].as_u16()?;
             let trigger_slope = result[1].as_u16()?;
@@ -156,8 +143,15 @@ impl NanonisClient {
     /// ```
     pub fn osci1t_trig_get_typed(
         &mut self,
-    ) -> Result<(super::types::OsciTriggerMode, super::types::TriggerSlope, f64, f64), NanonisError>
-    {
+    ) -> Result<
+        (
+            super::types::OsciTriggerMode,
+            super::types::TriggerSlope,
+            f64,
+            f64,
+        ),
+        NanonisError,
+    > {
         let (mode_raw, slope_raw, level, hysteresis) = self.osci1t_trig_get()?;
         let mode = super::types::OsciTriggerMode::try_from(mode_raw)?;
         let slope = super::types::TriggerSlope::try_from(slope_raw)?;

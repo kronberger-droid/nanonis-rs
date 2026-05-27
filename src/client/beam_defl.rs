@@ -40,7 +40,10 @@ impl NanonisClient {
     ///
     /// # Errors
     /// Returns `NanonisError` if communication fails.
-    pub fn beam_defl_hor_config_set(&mut self, config: &BeamDeflConfig) -> Result<(), NanonisError> {
+    pub fn beam_defl_hor_config_set(
+        &mut self,
+        config: &BeamDeflConfig,
+    ) -> Result<(), NanonisError> {
         self.quick_send(
             "BeamDefl.HorConfigSet",
             vec![
@@ -85,7 +88,10 @@ impl NanonisClient {
     ///
     /// # Errors
     /// Returns `NanonisError` if communication fails.
-    pub fn beam_defl_ver_config_set(&mut self, config: &BeamDeflConfig) -> Result<(), NanonisError> {
+    pub fn beam_defl_ver_config_set(
+        &mut self,
+        config: &BeamDeflConfig,
+    ) -> Result<(), NanonisError> {
         self.quick_send(
             "BeamDefl.VerConfigSet",
             vec![
@@ -130,7 +136,10 @@ impl NanonisClient {
     ///
     /// # Errors
     /// Returns `NanonisError` if communication fails.
-    pub fn beam_defl_int_config_set(&mut self, config: &BeamDeflConfig) -> Result<(), NanonisError> {
+    pub fn beam_defl_int_config_set(
+        &mut self,
+        config: &BeamDeflConfig,
+    ) -> Result<(), NanonisError> {
         self.quick_send(
             "BeamDefl.IntConfigSet",
             vec![

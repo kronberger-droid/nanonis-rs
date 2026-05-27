@@ -56,9 +56,8 @@ impl TryFrom<i32> for TriggerMode {
     type Error = NanonisError;
 
     fn try_from(value: i32) -> Result<Self, Self::Error> {
-        let v = u16::try_from(value).map_err(|_| {
-            NanonisError::Protocol(format!("Invalid trigger mode: {}", value))
-        })?;
+        let v = u16::try_from(value)
+            .map_err(|_| NanonisError::Protocol(format!("Invalid trigger mode: {}", value)))?;
         TriggerMode::try_from(v)
     }
 }
@@ -323,11 +322,7 @@ impl OsciData {
     }
 
     pub fn sample_rate(&self) -> f64 {
-        if self.dt > 0.0 {
-            1.0 / self.dt
-        } else {
-            0.0
-        }
+        if self.dt > 0.0 { 1.0 / self.dt } else { 0.0 }
     }
 
     pub fn time_points(&self) -> Vec<f64> {
@@ -381,7 +376,9 @@ mod tests {
     #[test]
     fn osci_trigger_mode_roundtrip() {
         for (mode, val) in [
-            (OsciTriggerMode::Immediate, 0), (OsciTriggerMode::Level, 1), (OsciTriggerMode::Auto, 2),
+            (OsciTriggerMode::Immediate, 0),
+            (OsciTriggerMode::Level, 1),
+            (OsciTriggerMode::Auto, 2),
         ] {
             assert_eq!(u16::from(mode), val);
             assert_eq!(OsciTriggerMode::try_from(val).unwrap(), mode);

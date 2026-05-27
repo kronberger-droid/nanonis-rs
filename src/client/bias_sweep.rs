@@ -236,8 +236,7 @@ impl NanonisClient {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn bias_sweep_limits_get(&mut self) -> Result<(f32, f32), NanonisError> {
-        let result =
-            self.quick_send("BiasSwp.LimitsGet", vec![], vec![], vec!["f", "f"])?;
+        let result = self.quick_send("BiasSwp.LimitsGet", vec![], vec![], vec!["f", "f"])?;
 
         if result.len() >= 2 {
             Ok((result[0].as_f32()?, result[1].as_f32()?))
@@ -275,12 +274,8 @@ impl NanonisClient {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn bias_sweep_props_get(&mut self) -> Result<(u16, u16, bool, bool), NanonisError> {
-        let result = self.quick_send(
-            "BiasSwp.PropsGet",
-            vec![],
-            vec![],
-            vec!["H", "H", "I", "I"],
-        )?;
+        let result =
+            self.quick_send("BiasSwp.PropsGet", vec![], vec![], vec!["H", "H", "I", "I"])?;
 
         if result.len() >= 4 {
             Ok((

@@ -513,14 +513,21 @@ mod tests {
     fn digital_sync_get_decoding() {
         assert_eq!(DigitalSync::try_from(0u16).unwrap(), DigitalSync::Off);
         assert_eq!(DigitalSync::try_from(1u16).unwrap(), DigitalSync::TTLSync);
-        assert_eq!(DigitalSync::try_from(2u16).unwrap(), DigitalSync::PulseSequence);
+        assert_eq!(
+            DigitalSync::try_from(2u16).unwrap(),
+            DigitalSync::PulseSequence
+        );
         assert!(DigitalSync::try_from(3u16).is_err());
     }
 
     #[test]
     fn digital_sync_get_set_offset() {
         // GET value + 1 = SET value for active modes (Off, TTLSync, PulseSequence)
-        let modes = [DigitalSync::Off, DigitalSync::TTLSync, DigitalSync::PulseSequence];
+        let modes = [
+            DigitalSync::Off,
+            DigitalSync::TTLSync,
+            DigitalSync::PulseSequence,
+        ];
         for (get_val, mode) in modes.iter().enumerate() {
             let decoded = DigitalSync::try_from(get_val as u16).unwrap();
             assert_eq!(decoded, *mode);
@@ -568,7 +575,10 @@ mod tests {
     #[test]
     fn ttl_polarity_get_decoding() {
         assert_eq!(TTLPolarity::try_from(0u16).unwrap(), TTLPolarity::LowActive);
-        assert_eq!(TTLPolarity::try_from(1u16).unwrap(), TTLPolarity::HighActive);
+        assert_eq!(
+            TTLPolarity::try_from(1u16).unwrap(),
+            TTLPolarity::HighActive
+        );
         assert!(TTLPolarity::try_from(2u16).is_err());
     }
 

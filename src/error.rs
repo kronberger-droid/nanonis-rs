@@ -167,15 +167,32 @@ mod tests {
         assert!(proto.is_protocol());
         assert!(!proto.is_server_error());
 
-        let server = NanonisError::Server { code: -1, message: "fail".into() };
+        let server = NanonisError::Server {
+            code: -1,
+            message: "fail".into(),
+        };
         assert!(server.is_server_error());
         assert!(!server.is_protocol());
     }
 
     #[test]
     fn error_code() {
-        assert_eq!(NanonisError::Server { code: 42, message: "".into() }.error_code(), Some(42));
-        assert_eq!(NanonisError::Server { code: -1, message: "".into() }.error_code(), Some(-1));
+        assert_eq!(
+            NanonisError::Server {
+                code: 42,
+                message: "".into()
+            }
+            .error_code(),
+            Some(42)
+        );
+        assert_eq!(
+            NanonisError::Server {
+                code: -1,
+                message: "".into()
+            }
+            .error_code(),
+            Some(-1)
+        );
         assert_eq!(NanonisError::Protocol("x".into()).error_code(), None);
         assert_eq!(NanonisError::Timeout("".into()).error_code(), None);
         assert_eq!(make_io_error().error_code(), None);
@@ -183,10 +200,22 @@ mod tests {
 
     #[test]
     fn display_formats() {
-        assert!(NanonisError::Timeout("scan".into()).to_string().contains("scan"));
+        assert!(
+            NanonisError::Timeout("scan".into())
+                .to_string()
+                .contains("scan")
+        );
         assert_eq!(NanonisError::Timeout("".into()).to_string(), "Timeout");
-        assert!(NanonisError::Protocol("bad parse".into()).to_string().contains("bad parse"));
-        let s = NanonisError::Server { code: -1, message: "Invalid".into() }.to_string();
+        assert!(
+            NanonisError::Protocol("bad parse".into())
+                .to_string()
+                .contains("bad parse")
+        );
+        let s = NanonisError::Server {
+            code: -1,
+            message: "Invalid".into(),
+        }
+        .to_string();
         assert!(s.contains("Invalid") && s.contains("-1"));
     }
 
@@ -222,6 +251,9 @@ mod tests {
     fn from_trait_classifies_timeouts() {
         let timed_out = std::io::Error::new(std::io::ErrorKind::TimedOut, "timed out");
         let err: NanonisError = timed_out.into();
-        assert!(err.is_timeout(), "From<io::Error> should classify TimedOut as Timeout");
+        assert!(
+            err.is_timeout(),
+            "From<io::Error> should classify TimedOut as Timeout"
+        );
     }
 }

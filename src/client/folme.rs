@@ -146,7 +146,11 @@ impl NanonisClient {
     ///
     /// # Errors
     /// Returns `NanonisError` if communication fails.
-    pub fn folme_speed_set(&mut self, speed_m_s: f32, custom_speed: bool) -> Result<(), NanonisError> {
+    pub fn folme_speed_set(
+        &mut self,
+        speed_m_s: f32,
+        custom_speed: bool,
+    ) -> Result<(), NanonisError> {
         let custom_speed_flag = if custom_speed { 1u32 } else { 0u32 };
         self.quick_send(
             "FolMe.SpeedSet",
@@ -256,12 +260,8 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn folme_ps_exp_get(&mut self) -> Result<FolMePSExperiment, NanonisError> {
-        let result = self.quick_send(
-            "FolMe.PSExpGet",
-            vec![],
-            vec![],
-            vec!["H", "i", "i", "*+c"],
-        )?;
+        let result =
+            self.quick_send("FolMe.PSExpGet", vec![], vec![], vec!["H", "i", "i", "*+c"])?;
 
         Ok(FolMePSExperiment {
             selected: result[0].as_u16()?,

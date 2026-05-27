@@ -604,10 +604,7 @@ impl NanonisClient {
     ///
     /// # Returns
     /// Phase register index (1-8).
-    pub fn lockin_demod_phas_reg_get(
-        &mut self,
-        demodulator_num: i32,
-    ) -> Result<i32, NanonisError> {
+    pub fn lockin_demod_phas_reg_get(&mut self, demodulator_num: i32) -> Result<i32, NanonisError> {
         let result = self.quick_send(
             "LockIn.DemodPhasRegGet",
             vec![NanonisValue::I32(demodulator_num)],

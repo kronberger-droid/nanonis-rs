@@ -52,10 +52,7 @@ pub struct Protocol;
 
 impl Protocol {
     /// Parse error information from the end of a response body using safe slice operations
-    pub fn parse_error_info(
-        body: &[u8],
-        data_end_cursor: usize,
-    ) -> Result<(), NanonisError> {
+    pub fn parse_error_info(body: &[u8], data_end_cursor: usize) -> Result<(), NanonisError> {
         // Get error section safely
         let error_section = match body.get(data_end_cursor..) {
             Some(section) if section.len() >= ERROR_INFO_SIZE => section,
@@ -66,27 +63,27 @@ impl Protocol {
         let (status_bytes, rest) = error_section.split_at(4);
         let (size_bytes, message_bytes) = rest.split_at(4);
 
-        let error_status =
-            i32::from_be_bytes(status_bytes.try_into().map_err(|_| {
-                NanonisError::Protocol("Invalid error status format".into())
-            })?);
+        let error_status = i32::from_be_bytes(
+            status_bytes
+                .try_into()
+                .map_err(|_| NanonisError::Protocol("Invalid error status format".into()))?,
+        );
 
-        let error_desc_size =
-            i32::from_be_bytes(size_bytes.try_into().map_err(|_| {
-                NanonisError::Protocol("Invalid error size format".into())
-            })?) as usize;
+        let error_desc_size = i32::from_be_bytes(
+            size_bytes
+                .try_into()
+                .map_err(|_| NanonisError::Protocol("Invalid error size format".into()))?,
+        ) as usize;
 
         if error_desc_size > 0 {
             // Safe message extraction with bounds checking
-            let message_slice =
-                message_bytes.get(..error_desc_size).ok_or_else(|| {
-                    NanonisError::Protocol("Error message truncated".into())
-                })?;
+            let message_slice = message_bytes
+                .get(..error_desc_size)
+                .ok_or_else(|| NanonisError::Protocol("Error message truncated".into()))?;
 
             // Use from_utf8 for better error handling
-            let error_msg = std::str::from_utf8(message_slice).map_err(|_| {
-                NanonisError::Protocol("Invalid UTF-8 in error message".into())
-            })?;
+            let error_msg = std::str::from_utf8(message_slice)
+                .map_err(|_| NanonisError::Protocol("Invalid UTF-8 in error message".into()))?;
 
             let trimmed_msg = error_msg.trim();
             if !trimmed_msg.is_empty() {
@@ -275,7 +272,7 @@ impl Protocol {
             _ => {
                 return Err(NanonisError::Protocol(format!(
                     "Unsupported type combination: {value:?} with {body_type}"
-                )))
+                )));
             }
         }
         Ok(())
@@ -319,7 +316,7 @@ impl Protocol {
                             _ => {
                                 return Err(NanonisError::Protocol(
                                     "Array length not found".to_string(),
-                                ))
+                                ));
                             }
                         }
                     } else {
@@ -346,7 +343,7 @@ impl Protocol {
                             _ => {
                                 return Err(NanonisError::Protocol(
                                     "Array length not found".to_string(),
-                                ))
+                                ));
                             }
                         }
                     } else {
@@ -373,7 +370,7 @@ impl Protocol {
                             _ => {
                                 return Err(NanonisError::Protocol(
                                     "Array length not found".to_string(),
-                                ))
+                                ));
                             }
                         }
                     } else {
@@ -400,7 +397,7 @@ impl Protocol {
                             _ => {
                                 return Err(NanonisError::Protocol(
                                     "Array length not found".to_string(),
-                                ))
+                                ));
                             }
                         }
                     } else {
@@ -430,8 +427,7 @@ impl Protocol {
                         let string_len = cursor.read_u32::<BigEndian>()? as usize;
                         let mut string_bytes = vec![0u8; string_len];
                         cursor.read_exact(&mut string_bytes)?;
-                        let string =
-                            String::from_utf8_lossy(&string_bytes).to_string();
+                        let string = String::from_utf8_lossy(&string_bytes).to_string();
                         strings.push(string);
                     }
 
@@ -447,7 +443,7 @@ impl Protocol {
                         _ => {
                             return Err(NanonisError::Protocol(
                                 "String count not found for *+c type".to_string(),
-                            ))
+                            ));
                         }
                     };
 
@@ -473,7 +469,7 @@ impl Protocol {
                         _ => {
                             return Err(NanonisError::Protocol(
                                 "String length not found for *-c type".to_string(),
-                            ))
+                            ));
                         }
                     };
 
@@ -494,7 +490,7 @@ impl Protocol {
                         _ => {
                             return Err(NanonisError::Protocol(
                                 "Array count not found for *+i type".to_string(),
-                            ))
+                            ));
                         }
                     };
 
@@ -521,7 +517,7 @@ impl Protocol {
                         _ => {
                             return Err(NanonisError::Protocol(
                                 "Invalid row count for 2D array".to_string(),
-                            ))
+                            ));
                         }
                     };
 
@@ -530,7 +526,7 @@ impl Protocol {
                         _ => {
                             return Err(NanonisError::Protocol(
                                 "Invalid column count for 2D array".to_string(),
-                            ))
+                            ));
                         }
                     };
 
@@ -551,7 +547,7 @@ impl Protocol {
                 _ => {
                     return Err(NanonisError::Protocol(format!(
                         "Unsupported response type: {response_type}"
-                    )))
+                    )));
                 }
             };
 
@@ -604,7 +600,10 @@ mod tests {
         assert_eq!(header.len(), HEADER_SIZE);
         assert_eq!(&header[..8], b"Bias.Set");
         assert!(header[8..32].iter().all(|&b| b == 0));
-        assert_eq!(u32::from_be_bytes([header[32], header[33], header[34], header[35]]), 4);
+        assert_eq!(
+            u32::from_be_bytes([header[32], header[33], header[34], header[35]]),
+            4
+        );
         assert_eq!(u16::from_be_bytes([header[36], header[37]]), RESPONSE_FLAG);
     }
 
@@ -619,14 +618,21 @@ mod tests {
     fn validate_response_header_matching() {
         let header = Protocol::create_command_header("Bias.Get", 42);
         let header_arr: [u8; HEADER_SIZE] = header.try_into().unwrap();
-        assert_eq!(Protocol::validate_response_header(&header_arr, "Bias.Get").unwrap(), 42);
+        assert_eq!(
+            Protocol::validate_response_header(&header_arr, "Bias.Get").unwrap(),
+            42
+        );
     }
 
     #[test]
     fn validate_response_header_mismatch() {
         let header = Protocol::create_command_header("Bias.Get", 42);
         let header_arr: [u8; HEADER_SIZE] = header.try_into().unwrap();
-        assert!(Protocol::validate_response_header(&header_arr, "Scan.Start").unwrap_err().is_protocol());
+        assert!(
+            Protocol::validate_response_header(&header_arr, "Scan.Start")
+                .unwrap_err()
+                .is_protocol()
+        );
     }
 
     #[test]
@@ -634,7 +640,10 @@ mod tests {
         // Regression: trim_end_matches('0') previously stripped digit '0'
         let header = Protocol::create_command_header("Foo.Get0", 10);
         let header_arr: [u8; HEADER_SIZE] = header.try_into().unwrap();
-        assert_eq!(Protocol::validate_response_header(&header_arr, "Foo.Get0").unwrap(), 10);
+        assert_eq!(
+            Protocol::validate_response_header(&header_arr, "Foo.Get0").unwrap(),
+            10
+        );
     }
 
     // ---- Serialization ----
@@ -664,7 +673,11 @@ mod tests {
     #[test]
     fn serialize_type_mismatch() {
         let mut buf = Vec::new();
-        assert!(Protocol::serialize_value(&NanonisValue::F32(1.0), "i", &mut buf).unwrap_err().is_protocol());
+        assert!(
+            Protocol::serialize_value(&NanonisValue::F32(1.0), "i", &mut buf)
+                .unwrap_err()
+                .is_protocol()
+        );
     }
 
     // ---- Parse response ----
@@ -688,7 +701,9 @@ mod tests {
     fn parse_f32_array_prepended() {
         let mut data = Vec::new();
         data.write_u32::<BigEndian>(3).unwrap();
-        for v in &[1.0f32, 2.0, 3.0] { data.write_f32::<BigEndian>(*v).unwrap(); }
+        for v in &[1.0f32, 2.0, 3.0] {
+            data.write_f32::<BigEndian>(*v).unwrap();
+        }
         let (vals, _) = Protocol::parse_response(&data, &["+*f"]).unwrap();
         assert_eq!(vals[0].as_f32_array().unwrap(), &[1.0, 2.0, 3.0]);
     }
@@ -709,8 +724,10 @@ mod tests {
         let total = (4 + 5 + 4 + 5) as u32; // two 5-byte strings
         data.write_u32::<BigEndian>(total).unwrap();
         data.write_u32::<BigEndian>(2).unwrap();
-        data.write_u32::<BigEndian>(5).unwrap(); data.extend_from_slice(b"hello");
-        data.write_u32::<BigEndian>(5).unwrap(); data.extend_from_slice(b"world");
+        data.write_u32::<BigEndian>(5).unwrap();
+        data.extend_from_slice(b"hello");
+        data.write_u32::<BigEndian>(5).unwrap();
+        data.extend_from_slice(b"world");
         let (vals, _) = Protocol::parse_response(&data, &["+*c"]).unwrap();
         assert_eq!(vals[0].as_string_array().unwrap(), &["hello", "world"]);
     }
@@ -729,9 +746,14 @@ mod tests {
         let mut data = Vec::new();
         data.write_i32::<BigEndian>(2).unwrap();
         data.write_i32::<BigEndian>(3).unwrap();
-        for v in &[1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0] { data.write_f32::<BigEndian>(*v).unwrap(); }
+        for v in &[1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0] {
+            data.write_f32::<BigEndian>(*v).unwrap();
+        }
         let (vals, _) = Protocol::parse_response(&data, &["i", "i", "2f"]).unwrap();
-        assert_eq!(vals[2].as_f32_2d_array().unwrap(), &[vec![1.0, 2.0, 3.0], vec![4.0, 5.0, 6.0]]);
+        assert_eq!(
+            vals[2].as_f32_2d_array().unwrap(),
+            &[vec![1.0, 2.0, 3.0], vec![4.0, 5.0, 6.0]]
+        );
     }
 
     #[test]
@@ -743,12 +765,20 @@ mod tests {
 
     #[test]
     fn parse_truncated_data() {
-        assert!(Protocol::parse_response(&[0; 2], &["f"]).unwrap_err().is_io());
+        assert!(
+            Protocol::parse_response(&[0; 2], &["f"])
+                .unwrap_err()
+                .is_io()
+        );
     }
 
     #[test]
     fn parse_unsupported_type() {
-        assert!(Protocol::parse_response(&[0; 4], &["UNKNOWN"]).unwrap_err().is_protocol());
+        assert!(
+            Protocol::parse_response(&[0; 4], &["UNKNOWN"])
+                .unwrap_err()
+                .is_protocol()
+        );
     }
 
     // ---- Round-trip ----
@@ -791,7 +821,8 @@ mod tests {
         // string array
         let strings = vec!["hello".into(), "".into(), "world!".into()];
         buf.clear();
-        Protocol::serialize_value(&NanonisValue::ArrayString(strings.clone()), "+*c", &mut buf).unwrap();
+        Protocol::serialize_value(&NanonisValue::ArrayString(strings.clone()), "+*c", &mut buf)
+            .unwrap();
         let (p, _) = Protocol::parse_response(&buf, &["+*c"]).unwrap();
         assert_eq!(p[0].as_string_array().unwrap(), &strings);
 
@@ -840,7 +871,12 @@ mod tests {
         let msg = "error";
         body.write_i32::<BigEndian>(msg.len() as i32).unwrap();
         body.extend_from_slice(msg.as_bytes());
-        assert_eq!(Protocol::parse_error_info(&body, 10).unwrap_err().error_code(), Some(-5));
+        assert_eq!(
+            Protocol::parse_error_info(&body, 10)
+                .unwrap_err()
+                .error_code(),
+            Some(-5)
+        );
     }
 
     // ---- Array length cap ----
@@ -848,7 +884,11 @@ mod tests {
     #[test]
     fn array_len_validation() {
         Protocol::validate_array_len(MAX_ARRAY_ELEMENTS, "*f").unwrap();
-        assert!(Protocol::validate_array_len(MAX_ARRAY_ELEMENTS + 1, "*f").unwrap_err().is_protocol());
+        assert!(
+            Protocol::validate_array_len(MAX_ARRAY_ELEMENTS + 1, "*f")
+                .unwrap_err()
+                .is_protocol()
+        );
     }
 
     // ---- Read helpers ----
@@ -856,13 +896,20 @@ mod tests {
     #[test]
     fn read_variable_bytes_rejects_oversized() {
         let mut r = std::io::Cursor::new(vec![0u8; 10]);
-        assert!(Protocol::read_variable_bytes(&mut r, MAX_RESPONSE_SIZE + 1).unwrap_err().is_protocol());
+        assert!(
+            Protocol::read_variable_bytes(&mut r, MAX_RESPONSE_SIZE + 1)
+                .unwrap_err()
+                .is_protocol()
+        );
     }
 
     #[test]
     fn read_exact_bytes_success_and_failure() {
         let mut r = std::io::Cursor::new([1u8, 2, 3, 4]);
-        assert_eq!(Protocol::read_exact_bytes::<4>(&mut r).unwrap(), [1, 2, 3, 4]);
+        assert_eq!(
+            Protocol::read_exact_bytes::<4>(&mut r).unwrap(),
+            [1, 2, 3, 4]
+        );
 
         let mut r = std::io::Cursor::new([1u8, 2]);
         assert!(Protocol::read_exact_bytes::<4>(&mut r).unwrap_err().is_io());

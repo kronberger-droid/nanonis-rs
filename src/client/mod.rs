@@ -1,4 +1,4 @@
-use super::protocol::{Protocol, HEADER_SIZE};
+use super::protocol::{HEADER_SIZE, Protocol};
 use crate::error::NanonisError;
 use crate::types::NanonisValue;
 use log::{debug, warn};
@@ -49,7 +49,6 @@ pub mod user_out;
 pub mod util;
 pub mod z_ctrl;
 pub mod z_spectr;
-
 
 /// Connection configuration for the Nanonis TCP client.
 ///
@@ -366,10 +365,14 @@ impl NanonisClient {
                 "Invalid address format '{addr}': expected 'host:port'"
             ))
         })?;
-        let port: u16 = port_str.parse().map_err(|_| {
-            NanonisError::Protocol(format!("Invalid port in address '{addr}'"))
-        })?;
-        Self::builder().address(host).port(port).config(config).build()
+        let port: u16 = port_str
+            .parse()
+            .map_err(|_| NanonisError::Protocol(format!("Invalid port in address '{addr}'")))?;
+        Self::builder()
+            .address(host)
+            .port(port)
+            .config(config)
+            .build()
     }
 
     /// Enable or disable debug output
@@ -399,22 +402,18 @@ impl NanonisClient {
     pub fn reconnect(&mut self) -> Result<(), NanonisError> {
         let socket_addr: SocketAddr = format!("{}:{}", self.address, self.port)
             .parse()
-            .map_err(|_| {
-                NanonisError::Protocol(format!("Invalid address: {}", self.address))
-            })?;
+            .map_err(|_| NanonisError::Protocol(format!("Invalid address: {}", self.address)))?;
 
         debug!("Reconnecting to Nanonis at {}:{}", self.address, self.port);
 
-        let stream =
-            TcpStream::connect_timeout(&socket_addr, self.config.connect_timeout).map_err(
-                |e| {
-                    warn!("Failed to reconnect to {}:{}: {e}", self.address, self.port);
-                    NanonisError::from_io(
-                        e,
-                        format!("Failed to reconnect to {}:{}", self.address, self.port),
-                    )
-                },
-            )?;
+        let stream = TcpStream::connect_timeout(&socket_addr, self.config.connect_timeout)
+            .map_err(|e| {
+                warn!("Failed to reconnect to {}:{}: {e}", self.address, self.port);
+                NanonisError::from_io(
+                    e,
+                    format!("Failed to reconnect to {}:{}", self.address, self.port),
+                )
+            })?;
 
         stream.set_read_timeout(Some(self.config.read_timeout))?;
         stream.set_write_timeout(Some(self.config.write_timeout))?;

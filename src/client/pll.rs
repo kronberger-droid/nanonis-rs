@@ -230,7 +230,10 @@ impl NanonisClient {
     ///
     /// # Errors
     /// Returns `NanonisError` if communication fails.
-    pub fn pll_inp_props_get(&mut self, modulator_index: i32) -> Result<PLLInputProps, NanonisError> {
+    pub fn pll_inp_props_get(
+        &mut self,
+        modulator_index: i32,
+    ) -> Result<PLLInputProps, NanonisError> {
         let result = self.quick_send(
             "PLL.InpPropsGet",
             vec![NanonisValue::I32(modulator_index)],
@@ -771,7 +774,10 @@ impl NanonisClient {
     ///
     /// # Errors
     /// Returns `NanonisError` if communication fails.
-    pub fn pll_amp_ctrl_bandwidth_get(&mut self, modulator_index: i32) -> Result<f32, NanonisError> {
+    pub fn pll_amp_ctrl_bandwidth_get(
+        &mut self,
+        modulator_index: i32,
+    ) -> Result<f32, NanonisError> {
         let result = self.quick_send(
             "PLL.AmpCtrlBandwidthGet",
             vec![NanonisValue::I32(modulator_index)],

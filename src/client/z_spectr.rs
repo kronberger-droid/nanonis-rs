@@ -159,8 +159,7 @@ impl NanonisClient {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn z_spectr_status_get(&mut self) -> Result<bool, NanonisError> {
-        let result =
-            self.quick_send("ZSpectr.StatusGet", vec![], vec![], vec!["I"])?;
+        let result = self.quick_send("ZSpectr.StatusGet", vec![], vec![], vec!["I"])?;
 
         match result.first() {
             Some(value) => Ok(value.as_u32()? == 1),
@@ -194,10 +193,7 @@ impl NanonisClient {
     /// client.z_spectr_chs_set(vec![0, 1, 2, 3, 4, 5])?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn z_spectr_chs_set(
-        &mut self,
-        channel_indexes: Vec<i32>,
-    ) -> Result<(), NanonisError> {
+    pub fn z_spectr_chs_set(&mut self, channel_indexes: Vec<i32>) -> Result<(), NanonisError> {
         self.quick_send(
             "ZSpectr.ChsSet",
             vec![NanonisValue::ArrayI32(channel_indexes)],
@@ -232,9 +228,7 @@ impl NanonisClient {
     /// }
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn z_spectr_chs_get(
-        &mut self,
-    ) -> Result<(Vec<i32>, Vec<String>), NanonisError> {
+    pub fn z_spectr_chs_get(&mut self) -> Result<(Vec<i32>, Vec<String>), NanonisError> {
         let result = self.quick_send(
             "ZSpectr.ChsGet",
             vec![],
@@ -318,8 +312,7 @@ impl NanonisClient {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn z_spectr_range_get(&mut self) -> Result<(f32, f32), NanonisError> {
-        let result =
-            self.quick_send("ZSpectr.RangeGet", vec![], vec![], vec!["f", "f"])?;
+        let result = self.quick_send("ZSpectr.RangeGet", vec![], vec![], vec!["f", "f"])?;
 
         if result.len() >= 2 {
             Ok((result[0].as_f32()?, result[1].as_f32()?))
@@ -411,9 +404,7 @@ impl NanonisClient {
     /// println!("Integration time: {:.3} s, settling: {:.3} s", integrate, settle);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn z_spectr_timing_get(
-        &mut self,
-    ) -> Result<(f32, f32, f32, f32, f32, f32), NanonisError> {
+    pub fn z_spectr_timing_get(&mut self) -> Result<(f32, f32, f32, f32, f32, f32), NanonisError> {
         let result = self.quick_send(
             "ZSpectr.TimingGet",
             vec![],
@@ -514,9 +505,7 @@ impl NanonisClient {
     /// }
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn z_spectr_retract_get(
-        &mut self,
-    ) -> Result<(bool, f32, i32, u16), NanonisError> {
+    pub fn z_spectr_retract_get(&mut self) -> Result<(bool, f32, i32, u16), NanonisError> {
         let result = self.quick_send(
             "ZSpectr.RetractGet",
             vec![],
@@ -708,7 +697,9 @@ impl NanonisClient {
     pub fn z_spectr_retract_delay_get(&mut self) -> Result<f32, NanonisError> {
         let result = self.quick_send("ZSpectr.RetractDelayGet", vec![], vec![], vec!["f"])?;
         if result.is_empty() {
-            return Err(NanonisError::Protocol("Empty response from ZSpectr.RetractDelayGet".to_string()));
+            return Err(NanonisError::Protocol(
+                "Empty response from ZSpectr.RetractDelayGet".to_string(),
+            ));
         }
         result[0].as_f32()
     }
@@ -759,7 +750,9 @@ impl NanonisClient {
             vec!["i", "f", "i", "H"],
         )?;
         if result.len() < 4 {
-            return Err(NanonisError::Protocol("Truncated response from ZSpectr.RetractSecondGet".to_string()));
+            return Err(NanonisError::Protocol(
+                "Truncated response from ZSpectr.RetractSecondGet".to_string(),
+            ));
         }
         Ok((
             result[0].as_i32()?,
@@ -796,7 +789,9 @@ impl NanonisClient {
     pub fn z_spectr_dig_sync_get(&mut self) -> Result<u16, NanonisError> {
         let result = self.quick_send("ZSpectr.DigSyncGet", vec![], vec![], vec!["H"])?;
         if result.is_empty() {
-            return Err(NanonisError::Protocol("Empty response from ZSpectr.DigSyncGet".to_string()));
+            return Err(NanonisError::Protocol(
+                "Empty response from ZSpectr.DigSyncGet".to_string(),
+            ));
         }
         result[0].as_u16()
     }
@@ -847,7 +842,9 @@ impl NanonisClient {
             vec!["H", "H", "f", "f"],
         )?;
         if result.len() < 4 {
-            return Err(NanonisError::Protocol("Truncated response from ZSpectr.TTLSyncGet".to_string()));
+            return Err(NanonisError::Protocol(
+                "Truncated response from ZSpectr.TTLSyncGet".to_string(),
+            ));
         }
         Ok((
             result[0].as_u16()?,
@@ -890,14 +887,11 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn z_spectr_pulse_seq_sync_get(&mut self) -> Result<(u16, u32), NanonisError> {
-        let result = self.quick_send(
-            "ZSpectr.PulseSeqSyncGet",
-            vec![],
-            vec![],
-            vec!["H", "I"],
-        )?;
+        let result = self.quick_send("ZSpectr.PulseSeqSyncGet", vec![], vec![], vec!["H", "I"])?;
         if result.len() < 2 {
-            return Err(NanonisError::Protocol("Truncated response from ZSpectr.PulseSeqSyncGet".to_string()));
+            return Err(NanonisError::Protocol(
+                "Truncated response from ZSpectr.PulseSeqSyncGet".to_string(),
+            ));
         }
         Ok((result[0].as_u16()?, result[1].as_u32()?))
     }

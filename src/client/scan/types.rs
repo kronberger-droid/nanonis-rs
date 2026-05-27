@@ -298,8 +298,12 @@ mod tests {
     #[test]
     fn scan_action_roundtrip() {
         for (action, val) in [
-            (ScanAction::Start, 0), (ScanAction::Stop, 1), (ScanAction::Pause, 2),
-            (ScanAction::Resume, 3), (ScanAction::Freeze, 4), (ScanAction::Unfreeze, 5),
+            (ScanAction::Start, 0),
+            (ScanAction::Stop, 1),
+            (ScanAction::Pause, 2),
+            (ScanAction::Resume, 3),
+            (ScanAction::Freeze, 4),
+            (ScanAction::Unfreeze, 5),
             (ScanAction::GoToCenter, 6),
         ] {
             assert_eq!(u16::from(action), val);

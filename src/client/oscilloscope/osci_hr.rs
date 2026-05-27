@@ -1,8 +1,8 @@
 use super::super::NanonisClient;
 use super::*;
+use crate::client::signals::SignalIndex;
 use crate::error::NanonisError;
 use crate::types::NanonisValue;
-use crate::client::signals::SignalIndex;
 
 impl NanonisClient {
     /// Set the measured signal index of the selected channel from the Oscilloscope High Resolution
@@ -452,10 +452,7 @@ impl NanonisClient {
     ) -> Result<(), NanonisError> {
         self.quick_send(
             "OsciHR.PSDWeightSet",
-            vec![
-                NanonisValue::I32(osci_index),
-                NanonisValue::U16(weighting),
-            ],
+            vec![NanonisValue::I32(osci_index), NanonisValue::U16(weighting)],
             vec!["i", "H"],
             vec![],
         )?;
@@ -502,10 +499,7 @@ impl NanonisClient {
     ) -> Result<(), NanonisError> {
         self.quick_send(
             "OsciHR.PSDWindowSet",
-            vec![
-                NanonisValue::I32(osci_index),
-                NanonisValue::U16(window),
-            ],
+            vec![NanonisValue::I32(osci_index), NanonisValue::U16(window)],
             vec!["i", "H"],
             vec![],
         )?;
@@ -531,9 +525,7 @@ impl NanonisClient {
         )?;
         match result.first() {
             Some(value) => Ok(value.as_u16()?),
-            None => Err(NanonisError::Protocol(
-                "No PSD window returned".to_string(),
-            )),
+            None => Err(NanonisError::Protocol("No PSD window returned".to_string())),
         }
     }
 
@@ -602,10 +594,7 @@ impl NanonisClient {
     ) -> Result<(), NanonisError> {
         self.quick_send(
             "OsciHR.PSDAvrgCountSet",
-            vec![
-                NanonisValue::I32(osci_index),
-                NanonisValue::I32(count),
-            ],
+            vec![NanonisValue::I32(osci_index), NanonisValue::I32(count)],
             vec!["i", "i"],
             vec![],
         )?;

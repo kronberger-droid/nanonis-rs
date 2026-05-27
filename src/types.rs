@@ -104,7 +104,9 @@ impl TryFrom<NanonisValue> for f32 {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::F32(v) => Ok(v),
-            _ => Err(NanonisError::Protocol(format!("Expected f32, got {value:?}"))),
+            _ => Err(NanonisError::Protocol(format!(
+                "Expected f32, got {value:?}"
+            ))),
         }
     }
 }
@@ -115,7 +117,9 @@ impl TryFrom<NanonisValue> for f64 {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::F64(v) => Ok(v),
-            _ => Err(NanonisError::Protocol(format!("Expected f64, got {value:?}"))),
+            _ => Err(NanonisError::Protocol(format!(
+                "Expected f64, got {value:?}"
+            ))),
         }
     }
 }
@@ -126,7 +130,9 @@ impl TryFrom<NanonisValue> for u16 {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::U16(v) => Ok(v),
-            _ => Err(NanonisError::Protocol(format!("Expected u16, got {value:?}"))),
+            _ => Err(NanonisError::Protocol(format!(
+                "Expected u16, got {value:?}"
+            ))),
         }
     }
 }
@@ -137,7 +143,9 @@ impl TryFrom<NanonisValue> for u32 {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::U32(v) => Ok(v),
-            _ => Err(NanonisError::Protocol(format!("Expected u32, got {value:?}"))),
+            _ => Err(NanonisError::Protocol(format!(
+                "Expected u32, got {value:?}"
+            ))),
         }
     }
 }
@@ -148,7 +156,9 @@ impl TryFrom<NanonisValue> for i16 {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::I16(v) => Ok(v),
-            _ => Err(NanonisError::Protocol(format!("Expected i16, got {value:?}"))),
+            _ => Err(NanonisError::Protocol(format!(
+                "Expected i16, got {value:?}"
+            ))),
         }
     }
 }
@@ -159,7 +169,9 @@ impl TryFrom<NanonisValue> for i32 {
     fn try_from(value: NanonisValue) -> Result<Self, Self::Error> {
         match value {
             NanonisValue::I32(v) => Ok(v),
-            _ => Err(NanonisError::Protocol(format!("Expected i32, got {value:?}"))),
+            _ => Err(NanonisError::Protocol(format!(
+                "Expected i32, got {value:?}"
+            ))),
         }
     }
 }
@@ -208,42 +220,54 @@ impl NanonisValue {
     pub fn as_f32(&self) -> Result<f32, NanonisError> {
         match self {
             NanonisValue::F32(v) => Ok(*v),
-            _ => Err(NanonisError::Protocol(format!("Expected f32, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!(
+                "Expected f32, got {self:?}"
+            ))),
         }
     }
 
     pub fn as_f64(&self) -> Result<f64, NanonisError> {
         match self {
             NanonisValue::F64(v) => Ok(*v),
-            _ => Err(NanonisError::Protocol(format!("Expected f64, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!(
+                "Expected f64, got {self:?}"
+            ))),
         }
     }
 
     pub fn as_u16(&self) -> Result<u16, NanonisError> {
         match self {
             NanonisValue::U16(v) => Ok(*v),
-            _ => Err(NanonisError::Protocol(format!("Expected u16, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!(
+                "Expected u16, got {self:?}"
+            ))),
         }
     }
 
     pub fn as_u32(&self) -> Result<u32, NanonisError> {
         match self {
             NanonisValue::U32(v) => Ok(*v),
-            _ => Err(NanonisError::Protocol(format!("Expected u32, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!(
+                "Expected u32, got {self:?}"
+            ))),
         }
     }
 
     pub fn as_i16(&self) -> Result<i16, NanonisError> {
         match self {
             NanonisValue::I16(v) => Ok(*v),
-            _ => Err(NanonisError::Protocol(format!("Expected i16, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!(
+                "Expected i16, got {self:?}"
+            ))),
         }
     }
 
     pub fn as_i32(&self) -> Result<i32, NanonisError> {
         match self {
             NanonisValue::I32(v) => Ok(*v),
-            _ => Err(NanonisError::Protocol(format!("Expected i32, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!(
+                "Expected i32, got {self:?}"
+            ))),
         }
     }
 
@@ -295,7 +319,9 @@ impl NanonisValue {
     pub fn as_string(&self) -> Result<&str, NanonisError> {
         match self {
             NanonisValue::String(s) => Ok(s),
-            _ => Err(NanonisError::Protocol(format!("Expected string, got {self:?}"))),
+            _ => Err(NanonisError::Protocol(format!(
+                "Expected string, got {self:?}"
+            ))),
         }
     }
 
@@ -341,9 +367,18 @@ mod tests {
 
     #[test]
     fn duration_valid_values() {
-        assert_eq!(duration_from_secs_f32(0.0).unwrap(), Duration::from_secs_f32(0.0));
-        assert_eq!(duration_from_secs_f32(1.5).unwrap(), Duration::from_secs_f32(1.5));
-        assert_eq!(duration_from_secs_f32(0.001).unwrap(), Duration::from_secs_f32(0.001));
+        assert_eq!(
+            duration_from_secs_f32(0.0).unwrap(),
+            Duration::from_secs_f32(0.0)
+        );
+        assert_eq!(
+            duration_from_secs_f32(1.5).unwrap(),
+            Duration::from_secs_f32(1.5)
+        );
+        assert_eq!(
+            duration_from_secs_f32(0.001).unwrap(),
+            Duration::from_secs_f32(0.001)
+        );
     }
 
     #[test]
@@ -377,9 +412,17 @@ mod tests {
 
     #[test]
     fn from_collections() {
-        assert!(matches!(NanonisValue::from("hello".to_string()), NanonisValue::String(s) if s == "hello"));
-        assert!(matches!(NanonisValue::from(vec![1.0f32, 2.0]), NanonisValue::ArrayF32(_)));
-        assert!(matches!(NanonisValue::from(vec![1i32, 2]), NanonisValue::ArrayI32(_)));
+        assert!(
+            matches!(NanonisValue::from("hello".to_string()), NanonisValue::String(s) if s == "hello")
+        );
+        assert!(matches!(
+            NanonisValue::from(vec![1.0f32, 2.0]),
+            NanonisValue::ArrayF32(_)
+        ));
+        assert!(matches!(
+            NanonisValue::from(vec![1i32, 2]),
+            NanonisValue::ArrayI32(_)
+        ));
     }
 
     // ---- NanonisValue TryFrom / as_* methods ----

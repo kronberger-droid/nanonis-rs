@@ -297,7 +297,10 @@ impl NanonisClient {
     ///
     /// # Errors
     /// Returns `NanonisError` if communication fails.
-    pub fn pi_ctrl_props_get(&mut self, controller_index: i32) -> Result<PICtrlProps, NanonisError> {
+    pub fn pi_ctrl_props_get(
+        &mut self,
+        controller_index: i32,
+    ) -> Result<PICtrlProps, NanonisError> {
         let result = self.quick_send(
             "PICtrl.PropsGet",
             vec![NanonisValue::I32(controller_index)],

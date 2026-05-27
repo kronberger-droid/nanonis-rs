@@ -201,8 +201,7 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn kelvin_ctrl_gain_get(&mut self) -> Result<KelvinGain, NanonisError> {
-        let result =
-            self.quick_send("KelvinCtrl.GainGet", vec![], vec![], vec!["f", "f", "H"])?;
+        let result = self.quick_send("KelvinCtrl.GainGet", vec![], vec![], vec!["f", "f", "H"])?;
 
         if result.len() >= 3 {
             Ok(KelvinGain {
@@ -247,8 +246,12 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn kelvin_ctrl_mod_params_get(&mut self) -> Result<KelvinModParams, NanonisError> {
-        let result =
-            self.quick_send("KelvinCtrl.ModParamsGet", vec![], vec![], vec!["f", "f", "f"])?;
+        let result = self.quick_send(
+            "KelvinCtrl.ModParamsGet",
+            vec![],
+            vec![],
+            vec!["f", "f", "f"],
+        )?;
 
         if result.len() >= 3 {
             Ok(KelvinModParams {
@@ -295,8 +298,7 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn kelvin_ctrl_mod_on_off_get(&mut self) -> Result<KelvinModStatus, NanonisError> {
-        let result =
-            self.quick_send("KelvinCtrl.ModOnOffGet", vec![], vec![], vec!["H", "H"])?;
+        let result = self.quick_send("KelvinCtrl.ModOnOffGet", vec![], vec![], vec!["H", "H"])?;
 
         if result.len() >= 2 {
             Ok(KelvinModStatus {
@@ -392,8 +394,7 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn kelvin_ctrl_bias_limits_get(&mut self) -> Result<KelvinBiasLimits, NanonisError> {
-        let result =
-            self.quick_send("KelvinCtrl.BiasLimitsGet", vec![], vec![], vec!["f", "f"])?;
+        let result = self.quick_send("KelvinCtrl.BiasLimitsGet", vec![], vec![], vec!["f", "f"])?;
 
         if result.len() >= 2 {
             Ok(KelvinBiasLimits {

@@ -1,8 +1,7 @@
-use nanonis_rs::scan::{AutosaveMode, ScanPropsBuilder};
 use nanonis_rs::NanonisClient;
+use nanonis_rs::scan::{AutosaveMode, ScanPropsBuilder};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut client = NanonisClient::new("127.0.0.1", 6501)?;
 
     println!("=== Scan Properties Test ===\n");
@@ -22,9 +21,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Step 2: Modify properties using builder
     println!("2. Setting new scan properties...");
     let new_props = ScanPropsBuilder::new()
-        .continuous_scan(true)         // Enable continuous scan
-        .bouncy_scan(true)             // Enable bouncy scan
-        .autosave(AutosaveMode::Off);  // Disable autosave
+        .continuous_scan(true) // Enable continuous scan
+        .bouncy_scan(true) // Enable bouncy scan
+        .autosave(AutosaveMode::Off); // Disable autosave
 
     client.scan_props_set(new_props)?;
     println!("   Properties set successfully");

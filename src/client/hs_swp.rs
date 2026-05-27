@@ -406,8 +406,12 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn hs_swp_save_basename_get(&mut self) -> Result<(String, String), NanonisError> {
-        let result =
-            self.quick_send("HSSwp.SaveBasenameGet", vec![], vec![], vec!["i", "*-c", "*-c"])?;
+        let result = self.quick_send(
+            "HSSwp.SaveBasenameGet",
+            vec![],
+            vec![],
+            vec!["i", "*-c", "*-c"],
+        )?;
 
         if result.len() >= 3 {
             Ok((
@@ -461,7 +465,10 @@ impl NanonisClient {
     ///
     /// # Errors
     /// Returns `NanonisError` if communication fails.
-    pub fn hs_swp_save_options_set(&mut self, options: &HSSwpSaveOptions) -> Result<(), NanonisError> {
+    pub fn hs_swp_save_options_set(
+        &mut self,
+        options: &HSSwpSaveOptions,
+    ) -> Result<(), NanonisError> {
         self.quick_send(
             "HSSwp.SaveOptionsSet",
             vec![
@@ -507,7 +514,11 @@ impl NanonisClient {
     ///
     /// # Errors
     /// Returns `NanonisError` if communication fails.
-    pub fn hs_swp_start(&mut self, wait_until_done: bool, timeout_ms: i32) -> Result<(), NanonisError> {
+    pub fn hs_swp_start(
+        &mut self,
+        wait_until_done: bool,
+        timeout_ms: i32,
+    ) -> Result<(), NanonisError> {
         let wait_flag = if wait_until_done { 1i32 } else { 0i32 };
         self.quick_send(
             "HSSwp.Start",
@@ -581,7 +592,10 @@ impl NanonisClient {
         let timed_flag = if timed_sweep { 1i32 } else { 0i32 };
         self.quick_send(
             "HSSwp.SwpChSignalSet",
-            vec![NanonisValue::I32(signal_index), NanonisValue::I32(timed_flag)],
+            vec![
+                NanonisValue::I32(signal_index),
+                NanonisValue::I32(timed_flag),
+            ],
             vec!["i", "i"],
             vec![],
         )?;
@@ -635,7 +649,8 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn hs_swp_swp_ch_limits_get(&mut self) -> Result<HSSwpLimits, NanonisError> {
-        let result = self.quick_send("HSSwp.SwpChLimitsGet", vec![], vec![], vec!["i", "f", "f"])?;
+        let result =
+            self.quick_send("HSSwp.SwpChLimitsGet", vec![], vec![], vec!["i", "f", "f"])?;
 
         if result.len() >= 3 {
             Ok(HSSwpLimits {
@@ -712,8 +727,12 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn hs_swp_swp_ch_timing_get(&mut self) -> Result<HSSwpTiming, NanonisError> {
-        let result =
-            self.quick_send("HSSwp.SwpChTimingGet", vec![], vec![], vec!["f", "f", "f", "f"])?;
+        let result = self.quick_send(
+            "HSSwp.SwpChTimingGet",
+            vec![],
+            vec![],
+            vec!["f", "f", "f", "f"],
+        )?;
 
         if result.len() >= 4 {
             Ok(HSSwpTiming {
@@ -828,8 +847,12 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn hs_swp_z_ctrl_off_get(&mut self) -> Result<HSSwpZCtrl, NanonisError> {
-        let result =
-            self.quick_send("HSSwp.ZCtrlOffGet", vec![], vec![], vec!["i", "i", "f", "f", "f"])?;
+        let result = self.quick_send(
+            "HSSwp.ZCtrlOffGet",
+            vec![],
+            vec![],
+            vec!["i", "i", "f", "f", "f"],
+        )?;
 
         if result.len() >= 5 {
             Ok(HSSwpZCtrl {

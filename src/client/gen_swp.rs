@@ -163,8 +163,12 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn gen_swp_swp_signal_list_get(&mut self) -> Result<Vec<String>, NanonisError> {
-        let result =
-            self.quick_send("GenSwp.SwpSignalListGet", vec![], vec![], vec!["i", "i", "*+c"])?;
+        let result = self.quick_send(
+            "GenSwp.SwpSignalListGet",
+            vec![],
+            vec![],
+            vec!["i", "i", "*+c"],
+        )?;
 
         if result.len() >= 3 {
             Ok(result[2].as_string_array()?.to_vec())

@@ -78,10 +78,7 @@ impl NanonisClient {
         let status = if enabled { 1u16 } else { 0u16 };
         self.quick_send(
             "AtomTrack.CtrlSet",
-            vec![
-                NanonisValue::U16(control.into()),
-                NanonisValue::U16(status),
-            ],
+            vec![NanonisValue::U16(control.into()), NanonisValue::U16(status)],
             vec!["H", "H"],
             vec![],
         )?;

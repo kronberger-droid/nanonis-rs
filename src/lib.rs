@@ -67,8 +67,8 @@ mod types;
 
 // ==================== Public API ====================
 
+pub use client::{ConnectionConfig, NanonisClient, NanonisClientBuilder};
 pub use error::NanonisError;
-pub use client::{NanonisClient, NanonisClientBuilder, ConnectionConfig};
 pub use tcplogger_stream::TCPLoggerStream;
 
 // ==================== Protocol Constants ====================

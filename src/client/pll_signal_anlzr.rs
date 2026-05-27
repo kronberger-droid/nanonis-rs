@@ -420,8 +420,12 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn pll_signal_anlzr_osci_data_get(&mut self) -> Result<OsciAnalyzerData, NanonisError> {
-        let result =
-            self.quick_send("PLLSignalAnlzr.OsciDataGet", vec![], vec![], vec!["d", "d", "i", "+*d"])?;
+        let result = self.quick_send(
+            "PLLSignalAnlzr.OsciDataGet",
+            vec![],
+            vec![],
+            vec!["d", "d", "i", "+*d"],
+        )?;
 
         if result.len() >= 4 {
             Ok(OsciAnalyzerData {
@@ -464,8 +468,12 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn pll_signal_anlzr_fft_props_get(&mut self) -> Result<FFTProps, NanonisError> {
-        let result =
-            self.quick_send("PLLSignalAnlzr.FFTPropsGet", vec![], vec![], vec!["H", "H", "H", "i"])?;
+        let result = self.quick_send(
+            "PLLSignalAnlzr.FFTPropsGet",
+            vec![],
+            vec![],
+            vec!["H", "H", "H", "i"],
+        )?;
 
         if result.len() >= 4 {
             // Note: returned values have different offset than set values
@@ -497,8 +505,12 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn pll_signal_anlzr_fft_data_get(&mut self) -> Result<FFTAnalyzerData, NanonisError> {
-        let result =
-            self.quick_send("PLLSignalAnlzr.FFTDataGet", vec![], vec![], vec!["d", "d", "i", "*d"])?;
+        let result = self.quick_send(
+            "PLLSignalAnlzr.FFTDataGet",
+            vec![],
+            vec![],
+            vec!["d", "d", "i", "*d"],
+        )?;
 
         if result.len() >= 4 {
             Ok(FFTAnalyzerData {
@@ -595,8 +607,12 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn pll_zoom_fft_props_get(&mut self) -> Result<FFTProps, NanonisError> {
-        let result =
-            self.quick_send("PLLZoomFFT.PropsGet", vec![], vec![], vec!["H", "H", "H", "i"])?;
+        let result = self.quick_send(
+            "PLLZoomFFT.PropsGet",
+            vec![],
+            vec![],
+            vec!["H", "H", "H", "i"],
+        )?;
 
         if result.len() >= 4 {
             Ok(FFTProps {
@@ -618,8 +634,12 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn pll_zoom_fft_data_get(&mut self) -> Result<FFTAnalyzerData, NanonisError> {
-        let result =
-            self.quick_send("PLLZoomFFT.DataGet", vec![], vec![], vec!["d", "d", "i", "*d"])?;
+        let result = self.quick_send(
+            "PLLZoomFFT.DataGet",
+            vec![],
+            vec![],
+            vec!["d", "d", "i", "*d"],
+        )?;
 
         if result.len() >= 4 {
             Ok(FFTAnalyzerData {

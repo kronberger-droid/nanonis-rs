@@ -160,7 +160,9 @@ impl NanonisClient {
                 NanonisValue::U32(dir_flag),
             ],
             vec!["i", "I", "I"],
-            vec!["i", "i", "*+c", "i", "i", "2f", "d", "d", "f", "f", "i", "i"],
+            vec![
+                "i", "i", "*+c", "i", "i", "2f", "d", "d", "f", "f", "i", "i",
+            ],
         )?;
 
         if get_data && result.len() >= 12 {

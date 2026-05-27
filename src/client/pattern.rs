@@ -345,12 +345,7 @@ impl NanonisClient {
     /// # Errors
     /// Returns `NanonisError` if communication fails.
     pub fn pattern_cloud_get(&mut self) -> Result<CloudConfig, NanonisError> {
-        let result = self.quick_send(
-            "Pattern.CloudGet",
-            vec![],
-            vec![],
-            vec!["i", "*f", "*f"],
-        )?;
+        let result = self.quick_send("Pattern.CloudGet", vec![], vec![], vec!["i", "*f", "*f"])?;
 
         if result.len() >= 3 {
             Ok(CloudConfig {

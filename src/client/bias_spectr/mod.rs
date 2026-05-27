@@ -303,9 +303,7 @@ impl NanonisClient {
                 fixed_parameters: result[12].as_string_array()?.to_vec(),
             })
         } else {
-            Err(NanonisError::Protocol(
-                "Invalid props response".to_string(),
-            ))
+            Err(NanonisError::Protocol("Invalid props response".to_string()))
         }
     }
 
@@ -481,7 +479,10 @@ impl NanonisClient {
     /// client.bias_spectr_timing_set(&timing)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn bias_spectr_timing_set(&mut self, timing: &BiasSpectrTiming) -> Result<(), NanonisError> {
+    pub fn bias_spectr_timing_set(
+        &mut self,
+        timing: &BiasSpectrTiming,
+    ) -> Result<(), NanonisError> {
         self.quick_send(
             "BiasSpectr.TimingSet",
             vec![
@@ -770,7 +771,10 @@ impl NanonisClient {
     /// client.bias_spectr_alt_z_ctrl_set(&config)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn bias_spectr_alt_z_ctrl_set(&mut self, config: &AltZCtrlConfig) -> Result<(), NanonisError> {
+    pub fn bias_spectr_alt_z_ctrl_set(
+        &mut self,
+        config: &AltZCtrlConfig,
+    ) -> Result<(), NanonisError> {
         let enabled_flag = if config.enabled {
             OptionalFlag::On
         } else {
@@ -808,8 +812,12 @@ impl NanonisClient {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn bias_spectr_alt_z_ctrl_get(&mut self) -> Result<AltZCtrlConfig, NanonisError> {
-        let result =
-            self.quick_send("BiasSpectr.AltZCtrlGet", vec![], vec![], vec!["H", "f", "f"])?;
+        let result = self.quick_send(
+            "BiasSpectr.AltZCtrlGet",
+            vec![],
+            vec![],
+            vec!["H", "f", "f"],
+        )?;
 
         if result.len() >= 3 {
             Ok(AltZCtrlConfig {
@@ -843,7 +851,10 @@ impl NanonisClient {
     /// client.bias_spectr_z_off_revert_set(OptionalFlag::On)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn bias_spectr_z_off_revert_set(&mut self, revert: OptionalFlag) -> Result<(), NanonisError> {
+    pub fn bias_spectr_z_off_revert_set(
+        &mut self,
+        revert: OptionalFlag,
+    ) -> Result<(), NanonisError> {
         self.quick_send(
             "BiasSpectr.ZOffRevertSet",
             vec![NanonisValue::U16(revert.into())],
@@ -900,7 +911,10 @@ impl NanonisClient {
     /// client.bias_spectr_mls_lockin_per_seg_set(true)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn bias_spectr_mls_lockin_per_seg_set(&mut self, enabled: bool) -> Result<(), NanonisError> {
+    pub fn bias_spectr_mls_lockin_per_seg_set(
+        &mut self,
+        enabled: bool,
+    ) -> Result<(), NanonisError> {
         let flag = if enabled { 1u32 } else { 0u32 };
         self.quick_send(
             "BiasSpectr.MLSLockinPerSegSet",
@@ -929,8 +943,7 @@ impl NanonisClient {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn bias_spectr_mls_lockin_per_seg_get(&mut self) -> Result<bool, NanonisError> {
-        let result =
-            self.quick_send("BiasSpectr.MLSLockinPerSegGet", vec![], vec![], vec!["I"])?;
+        let result = self.quick_send("BiasSpectr.MLSLockinPerSegGet", vec![], vec![], vec!["I"])?;
 
         if let Some(val) = result.first() {
             Ok(val.as_u32()? != 0)
@@ -1040,7 +1053,10 @@ impl NanonisClient {
     /// client.bias_spectr_mls_vals_set(&segments)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn bias_spectr_mls_vals_set(&mut self, segments: &[MLSSegment]) -> Result<(), NanonisError> {
+    pub fn bias_spectr_mls_vals_set(
+        &mut self,
+        segments: &[MLSSegment],
+    ) -> Result<(), NanonisError> {
         let num_segments = segments.len() as i32;
         let bias_start: Vec<f32> = segments.iter().map(|s| s.bias_start).collect();
         let bias_end: Vec<f32> = segments.iter().map(|s| s.bias_end).collect();

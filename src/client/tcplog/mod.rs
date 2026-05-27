@@ -98,9 +98,10 @@ impl NanonisClient {
     pub fn tcplog_chs_set(&mut self, channel_indexes: Vec<i32>) -> Result<(), NanonisError> {
         for &index in &channel_indexes {
             if !(0..=23).contains(&index) {
-                return Err(NanonisError::Protocol(
-                    format!("Invalid signal slot index: {}. Must be between 0-23 (signal slots, not full signal indices)", index)
-                ));
+                return Err(NanonisError::Protocol(format!(
+                    "Invalid signal slot index: {}. Must be between 0-23 (signal slots, not full signal indices)",
+                    index
+                )));
             }
         }
         let num_channels = channel_indexes.len() as i32;
