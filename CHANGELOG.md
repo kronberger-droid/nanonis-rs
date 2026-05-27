@@ -5,10 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - 2026-04-08
+## [0.4.0] - 2026-05-27
 
 ### Fixed
 
+- `Scan.PropsGet` is now tolerant of older Nanonis firmware. The reply layout grew
+  across firmware versions (the modules-parameters block and Auto-Paste field were
+  added later), so the fixed 16-field parser overran the shorter reply and failed
+  with `UnexpectedEof`. It now tries the full documented layout and falls back to
+  the core fields when the body is too short.
 - `TriggerMode` conversion from integers now uses `TryFrom` instead of infallible
   `From`. Unknown values return `NanonisError::Protocol` instead of silently
   defaulting to `TriggerMode::Immediate`. This was the only enum in the crate that
@@ -20,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `NanonisClient::quick_send_raw()`: sends a command and returns the raw, unparsed
+  response body, for commands whose reply layout varies across firmware versions.
 - `TCPLoggerStream::read_frame()` now automatically skips the counter-0 metadata
   frame that Nanonis sends when the TCP logger starts. Callers no longer need to
   handle this protocol detail. Use `read_frame_raw()` to access all frames including
