@@ -14,7 +14,7 @@ documentation = "https://docs.rs/nanonis-rs"
 # Keep the published crate lean: ship only source + docs, not dev/CI files
 # or the 3.6 MB protocol manual.
 exclude = [
-    "TCPProtocol_SPM.pdf",
+    "docs/",
     "CLAUDE.md",
     ".github/",
     "flake.nix",

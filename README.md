@@ -178,6 +178,8 @@ match client.bias_get() {
 
 Full API documentation is available on [docs.rs](https://docs.rs/nanonis-rs). The documentation includes detailed examples for each command.
 
+The underlying protocol spec is included as [`docs/tcp-protocol.md`](docs/tcp-protocol.md), a markdown conversion of the SPECS "Nanonis TCP Protocol" document (R14718, April 2025). It covers all 661 commands with their arguments and return values, and is searchable with `rg '^#### Scan\.' docs/tcp-protocol.md`.
+
 ## Requirements
 
 - Rust 2021 edition or later

@@ -163,7 +163,7 @@ When implementing a new Nanonis command:
 
 1. Add the method to the appropriate module in `src/client/`
 2. Follow the command pattern shown above
-3. Reference Nanonis TCP protocol documentation for type descriptors
+3. Look the command up in `docs/tcp-protocol.md` to get its argument and return types
 4. Add comprehensive doc comments with examples (they become doctests)
 5. Handle both success and error cases
 6. Extract and convert return values appropriately
@@ -175,6 +175,36 @@ Example type descriptor patterns:
 - `"*+c"` - string array (count from previous value, each string length prepended)
 - `"+*c"` - string array (total size + count prepended, each string length prepended)
 - `"2f"` - 2D f32 array (dimensions from two previous values)
+
+### Protocol Reference (`docs/tcp-protocol.md`)
+
+The full SPECS "Nanonis TCP Protocol" spec (R14718, April 2025) converted to markdown so it can be searched with `rg`. It is the authoritative source for every command's signature.
+
+Each of the 661 commands is a `####` heading, its module a `###` heading:
+
+```bash
+# The full entry for one command
+rg -A 20 '^#### Motor\.StartMove$' docs/tcp-protocol.md
+
+# Every command in a module
+rg '^#### Scan\.' docs/tcp-protocol.md
+```
+
+An entry lists a description, `Arguments:`, and `Return arguments (...)`, each argument written as `Name (type)` followed by prose. Map those types onto the descriptors above:
+
+| Spec type | Descriptor |
+|---|---|
+| `int` / `unsigned int32` | `"i"` / `"I"` |
+| `unsigned int16` | `"H"` |
+| `float32` / `float64` | `"f"` / `"d"` |
+| `string` | `"+*c"` |
+| `1D array float32` | `"*f"`, or `"+*f"` when the length is prepended |
+| `1D array string` | `"+*c"`, or `"*+c"` when the count is a preceding argument |
+| `2D array float32` | `"2f"` |
+
+Note that `"+*c"` covers both a single string and a string array; the encoder dispatches on the `NanonisValue` variant, not the descriptor (`src/protocol.rs:198`).
+
+Watch for size arguments: a spec entry listing `Channels names size (int)`, `Number of channels (int)`, then `Channels names (1D array string)` describes a *single* `"+*c"` value, not three arguments. Those length prefixes are protocol framing, so they should not become Rust parameters.
 
 ## Testing
 
