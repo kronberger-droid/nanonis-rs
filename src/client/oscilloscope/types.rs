@@ -1,4 +1,5 @@
 use crate::error::NanonisError;
+use serde::{Deserialize, Serialize};
 
 // ==================== Oscilloscope Types ====================
 
@@ -292,7 +293,7 @@ impl TriggerConfig {
 /// Contains the time base and sampled data points returned by the
 /// Nanonis oscilloscope commands. No application-level analysis
 /// fields — stability checking belongs in downstream crates.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OsciData {
     pub t0: f64,
     pub dt: f64,

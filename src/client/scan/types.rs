@@ -1,5 +1,6 @@
 use crate::error::NanonisError;
 use crate::types::Position;
+use serde::{Deserialize, Serialize};
 
 // ==================== Scan Types ====================
 
@@ -381,4 +382,49 @@ mod tests {
         assert_eq!(b.autosave, Some(AutosaveMode::Off));
         assert_eq!(b.series_name.unwrap(), "test");
     }
+}
+
+/// What the scan head was doing when a line completed, as reported by
+/// `Scan.WaitEndOfLine`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ScanLineMovement {
+    /// Scanning forward.
+    Forward,
+    /// Scanning backward.
+    Backward,
+    /// Moved to the scan frame center.
+    MovedToCenter,
+    /// Moved to the start point of the scan frame, right before scanning.
+    MovedToStart,
+}
+
+impl TryFrom<u16> for ScanLineMovement {
+    type Error = NanonisError;
+
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(ScanLineMovement::Forward),
+            1 => Ok(ScanLineMovement::Backward),
+            2 => Ok(ScanLineMovement::MovedToCenter),
+            3 => Ok(ScanLineMovement::MovedToStart),
+            _ => Err(NanonisError::Protocol(format!(
+                "Invalid scan line movement type: {}",
+                value
+            ))),
+        }
+    }
+}
+
+/// Result of waiting for an end-of-line during a scan
+/// ([`super::NanonisClient::scan_wait_end_of_line`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScanLineEnd {
+    /// `true` if the wait timed out before a line completed.
+    pub timed_out: bool,
+    /// The line number of the last completed line.
+    pub line: i32,
+    /// What the scan head was doing.
+    pub movement: ScanLineMovement,
+    /// The pass number of the last completed line (relevant with MultiPass).
+    pub pass: i32,
 }
