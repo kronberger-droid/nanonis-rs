@@ -1,6 +1,7 @@
 // ==================== Z-Controller Types ====================
 
 use crate::error::NanonisError;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ZControllerHold {
@@ -36,7 +37,7 @@ impl From<ZHomeMode> for u16 {
 }
 
 /// Z-Controller status values.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum ZControllerStatus {
     #[default]
     Off = 1,
