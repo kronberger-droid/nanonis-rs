@@ -429,8 +429,8 @@ mod tests {
 
     #[test]
     fn tryfrom_correct_types() {
-        assert_eq!(f32::try_from(NanonisValue::F32(3.14)).unwrap(), 3.14);
-        assert_eq!(f64::try_from(NanonisValue::F64(2.718)).unwrap(), 2.718);
+        assert_eq!(f32::try_from(NanonisValue::F32(1.25)).unwrap(), 1.25);
+        assert_eq!(f64::try_from(NanonisValue::F64(2.25)).unwrap(), 2.25);
         assert_eq!(u16::try_from(NanonisValue::U16(100)).unwrap(), 100);
         assert_eq!(u32::try_from(NanonisValue::U32(200)).unwrap(), 200);
         assert_eq!(i16::try_from(NanonisValue::I16(-5)).unwrap(), -5);

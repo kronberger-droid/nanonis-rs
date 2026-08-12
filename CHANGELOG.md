@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Panic-path clippy lints (`unwrap_used`, `expect_used`, `panic`, and
+  friends) are denied crate-wide via `[lints.clippy]`; tests are exempt
+  through `clippy.toml`. A client crate driving hardware must not take
+  the caller down. `indexing_slicing`, `arithmetic_side_effects` and
+  `as_conversions` are wanted too but need larger changes first; they
+  stay commented in `Cargo.toml` with hit counts.
+
+### Changed
+
+- **Breaking:** `TCPLoggerStream::spawn_background_reader` returns
+  `Result<BackgroundReader, NanonisError>` instead of panicking when the
+  OS refuses to spawn the reader thread (the only panic path in the
+  library).
+
 ## [0.4.0] - 2026-05-27
 
 ### Fixed

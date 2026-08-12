@@ -29,3 +29,23 @@ thiserror = "1.0"
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+# A panic in a client crate driving hardware takes the caller's tip with
+# it, so library code must be panic-free. Tests are exempt via clippy.toml.
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+panic_in_result_fn = "deny"
+todo = "deny"
+unimplemented = "deny"
+unreachable = "deny"
+exit = "deny"
+string_slice = "deny"
+unchecked_time_subtraction = "deny"
+# -- Wanted, but need larger changes first (hit counts from 2026-08-12) --
+# indexing_slicing = "deny"        # ~1300 hits: protocol parsing indexes wire buffers
+# arithmetic_side_effects = "deny" # ~30 hits: wire-size arithmetic, sweep helpers
+# as_conversions = "deny"          # ~300 hits: f32/f64 wire conversions are the crate's
+#                                  # bread and butter; consider the finer cast_* lints
+# pedantic = { level = "warn", priority = -1 }  # triage before enabling: CI denies warnings

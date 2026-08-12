@@ -14,6 +14,13 @@ pub struct TCPLoggerStream {
     buffer: Vec<u8>,
 }
 
+/// What [`TCPLoggerStream::spawn_background_reader`] hands back: the frame
+/// channel and the reader thread's handle.
+pub type BackgroundReader = (
+    mpsc::Receiver<SignalFrame>,
+    JoinHandle<Result<(), NanonisError>>,
+);
+
 impl TCPLoggerStream {
     /// Connect to TCP Logger data stream only
     ///
@@ -63,12 +70,11 @@ impl TCPLoggerStream {
     /// The thread exits when:
     /// - The receiver is dropped (clean shutdown, returns `Ok(())`)
     /// - A `read_frame` call fails (returns `Err(NanonisError)`)
-    pub fn spawn_background_reader(
-        mut self,
-    ) -> (
-        mpsc::Receiver<SignalFrame>,
-        JoinHandle<Result<(), NanonisError>>,
-    ) {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the OS refuses to spawn the thread.
+    pub fn spawn_background_reader(mut self) -> Result<BackgroundReader, NanonisError> {
         let (sender, receiver) = mpsc::channel();
 
         let handle = thread::Builder::new()
@@ -85,9 +91,12 @@ impl TCPLoggerStream {
                     }
                 }
             })
-            .expect("failed to spawn tcp-logger-reader thread");
+            .map_err(|e| NanonisError::Io {
+                source: e,
+                context: "spawning tcp-logger-reader thread".to_string(),
+            })?;
 
-        (receiver, handle)
+        Ok((receiver, handle))
     }
 
     /// Read a single data frame from the stream.
