@@ -687,14 +687,14 @@ mod tests {
         let mut data = Vec::new();
         data.write_u16::<BigEndian>(42).unwrap();
         data.write_i32::<BigEndian>(-7).unwrap();
-        data.write_f32::<BigEndian>(3.14).unwrap();
-        data.write_f64::<BigEndian>(2.718).unwrap();
+        data.write_f32::<BigEndian>(1.25).unwrap();
+        data.write_f64::<BigEndian>(2.25).unwrap();
 
         let (vals, _) = Protocol::parse_response(&data, &["H", "i", "f", "d"]).unwrap();
         assert_eq!(vals[0].as_u16().unwrap(), 42);
         assert_eq!(vals[1].as_i32().unwrap(), -7);
-        assert!((vals[2].as_f32().unwrap() - 3.14).abs() < 1e-5);
-        assert!((vals[3].as_f64().unwrap() - 2.718).abs() < 1e-10);
+        assert!((vals[2].as_f32().unwrap() - 1.25).abs() < 1e-5);
+        assert!((vals[3].as_f64().unwrap() - 2.25).abs() < 1e-10);
     }
 
     #[test]
@@ -790,8 +790,8 @@ mod tests {
             (NanonisValue::I16(-500), "h"),
             (NanonisValue::U32(123456), "I"),
             (NanonisValue::I32(-42), "i"),
-            (NanonisValue::F32(3.14), "f"),
-            (NanonisValue::F64(2.718281828), "d"),
+            (NanonisValue::F32(1.25), "f"),
+            (NanonisValue::F64(2.25281828), "d"),
         ];
         for (val, td) in &cases {
             let mut buf = Vec::new();
