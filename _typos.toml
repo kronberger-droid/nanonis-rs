@@ -2,3 +2,7 @@
 # PDF; its typos are the document's, not ours.
 [files]
 extend-exclude = ["docs/tcp-protocol.md"]
+
+[default.extend-words]
+# Attocube ANC150 positioner, not a typo of "and".
+ANC = "ANC"
