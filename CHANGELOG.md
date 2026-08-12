@@ -5,10 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] - 2026-08-12
 
 ### Added
 
+- `scan_wait_end_of_line` (`Scan.WaitEndOfLine`): blocks until the next
+  completed scan line and returns `ScanLineEnd` — line number, movement
+  type (`ScanLineMovement`), and MultiPass pass number. The
+  synchronization point for per-line processing.
+- `Serialize`/`Deserialize` on `ZControllerStatus` and `OsciData`, so
+  downstream event logs can carry them without mirror types.
 - Panic-path clippy lints (`unwrap_used`, `expect_used`, `panic`, and
   friends) are denied crate-wide via `[lints.clippy]`; tests are exempt
   through `clippy.toml`. A client crate driving hardware must not take

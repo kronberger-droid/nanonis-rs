@@ -586,6 +586,62 @@ impl NanonisClient {
         }
     }
 
+    /// Wait for the next end-of-line during a scan.
+    ///
+    /// Returns which line just completed, what the scan head was doing
+    /// (forward, backward, or a frame move), and the MultiPass pass number.
+    /// This is the synchronization point for per-line processing: grab the
+    /// frame after each completed line instead of waiting for the whole
+    /// image.
+    ///
+    /// # Errors
+    /// Returns `NanonisError` if communication fails or protocol error occurs.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use nanonis_rs::NanonisClient;
+    /// use nanonis_rs::scan::{ScanAction, ScanDirection};
+    /// use std::time::Duration;
+    ///
+    /// let mut client = NanonisClient::new("127.0.0.1", 6501)?;
+    /// client.scan_action(ScanAction::Start, ScanDirection::Up)?;
+    ///
+    /// loop {
+    ///     let end = client.scan_wait_end_of_line(Duration::from_secs(60))?;
+    ///     if end.timed_out {
+    ///         break;
+    ///     }
+    ///     println!("line {} done ({:?}, pass {})", end.line, end.movement, end.pass);
+    /// }
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn scan_wait_end_of_line(
+        &mut self,
+        timeout: Duration,
+    ) -> Result<ScanLineEnd, NanonisError> {
+        let result = self.quick_send(
+            "Scan.WaitEndOfLine",
+            vec![NanonisValue::I32(
+                timeout.as_millis().min(i32::MAX as u128) as i32
+            )],
+            vec!["i"],
+            vec!["I", "i", "H", "i"],
+        )?;
+
+        if result.len() >= 4 {
+            Ok(ScanLineEnd {
+                timed_out: result[0].as_u32()? == 1,
+                line: result[1].as_i32()?,
+                movement: ScanLineMovement::try_from(result[2].as_u16()?)?,
+                pass: result[3].as_i32()?,
+            })
+        } else {
+            Err(NanonisError::Protocol(
+                "Invalid scan wait end-of-line response".to_string(),
+            ))
+        }
+    }
+
     /// Get scan properties configuration.
     ///
     /// Returns current scan properties including continuous scan, bouncy scan,
