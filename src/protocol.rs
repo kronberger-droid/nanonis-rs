@@ -75,23 +75,31 @@ impl Protocol {
                 .map_err(|_| NanonisError::Protocol("Invalid error size format".into()))?,
         ) as usize;
 
-        if error_desc_size > 0 {
+        let message = if error_desc_size > 0 {
             // Safe message extraction with bounds checking
             let message_slice = message_bytes
                 .get(..error_desc_size)
                 .ok_or_else(|| NanonisError::Protocol("Error message truncated".into()))?;
 
             // Use from_utf8 for better error handling
-            let error_msg = std::str::from_utf8(message_slice)
-                .map_err(|_| NanonisError::Protocol("Invalid UTF-8 in error message".into()))?;
+            std::str::from_utf8(message_slice)
+                .map_err(|_| NanonisError::Protocol("Invalid UTF-8 in error message".into()))?
+                .trim()
+        } else {
+            ""
+        };
 
-            let trimmed_msg = error_msg.trim();
-            if !trimmed_msg.is_empty() {
-                return Err(NanonisError::Server {
-                    code: error_status,
-                    message: trimmed_msg.to_string(),
-                });
-            }
+        // The status is the error flag; the description is optional.
+        if error_status != 0 || !message.is_empty() {
+            let message = if message.is_empty() {
+                format!("server reported error status {error_status} without a description")
+            } else {
+                message.to_string()
+            };
+            return Err(NanonisError::Server {
+                code: error_status,
+                message,
+            });
         }
 
         Ok(())
@@ -857,6 +865,35 @@ mod tests {
             }
             e => panic!("Expected Server error, got {e:?}"),
         }
+    }
+
+    #[test]
+    fn error_info_status_without_description_is_error() {
+        let mut body = Vec::new();
+        body.write_i32::<BigEndian>(1).unwrap();
+        body.write_i32::<BigEndian>(0).unwrap();
+        match Protocol::parse_error_info(&body, 0).unwrap_err() {
+            NanonisError::Server { code, message } => {
+                assert_eq!(code, 1);
+                assert!(!message.is_empty());
+            }
+            e => panic!("Expected Server error, got {e:?}"),
+        }
+    }
+
+    #[test]
+    fn error_info_status_with_blank_description_is_error() {
+        let mut body = Vec::new();
+        body.write_i32::<BigEndian>(1).unwrap();
+        let msg = "   ";
+        body.write_i32::<BigEndian>(msg.len() as i32).unwrap();
+        body.extend_from_slice(msg.as_bytes());
+        assert_eq!(
+            Protocol::parse_error_info(&body, 0)
+                .unwrap_err()
+                .error_code(),
+            Some(1)
+        );
     }
 
     #[test]
