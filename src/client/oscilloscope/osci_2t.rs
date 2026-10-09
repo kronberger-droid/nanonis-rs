@@ -4,15 +4,15 @@ use crate::types::NanonisValue;
 
 impl NanonisClient {
     /// Set the channels to display in the Oscilloscope 2-Channels
-    /// channel_a_index: 0-23, channel A signal index  
-    /// channel_b_index: 0-23, channel B signal index
+    /// channel_a_index: 0-127, channel A signal index
+    /// channel_b_index: 0-127, channel B signal index
     pub fn osci2t_ch_set(
         &mut self,
         channel_a_index: i32,
         channel_b_index: i32,
     ) -> Result<(), NanonisError> {
         self.quick_send(
-            "Osci2T.ChSet",
+            "Osci2T.ChsSet",
             vec![
                 NanonisValue::I32(channel_a_index),
                 NanonisValue::I32(channel_b_index),
@@ -26,7 +26,7 @@ impl NanonisClient {
     /// Get the channels displayed in the Oscilloscope 2-Channels
     /// Returns: (channel_a_index, channel_b_index)
     pub fn osci2t_ch_get(&mut self) -> Result<(i32, i32), NanonisError> {
-        let result = self.quick_send("Osci2T.ChGet", vec![], vec![], vec!["i", "i"])?;
+        let result = self.quick_send("Osci2T.ChsGet", vec![], vec![], vec!["i", "i"])?;
         if result.len() >= 2 {
             let channel_a = result[0].as_i32()?;
             let channel_b = result[1].as_i32()?;
