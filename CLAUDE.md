@@ -218,7 +218,10 @@ cargo test --doc
 cargo test --doc client::bias
 ```
 
-No unit tests are currently implemented - the doctests serve as integration tests requiring a real Nanonis connection.
+Unit tests cover the protocol codec, the error types, the domain types, and
+the client and TCP logger against loopback sockets (`cargo test --all-targets`).
+Most doctests are `no_run` examples that need a real Nanonis connection;
+`cargo test --doc` compile-checks those and runs the rest.
 
 ## Resource Cleanup
 
@@ -232,4 +235,4 @@ let client = NanonisClient::builder()
     .build()?;
 ```
 
-When enabled, on drop it withdraws the Z-controller and moves motors in the ZMinus direction (away from surface). Default: disabled.
+When enabled, on drop it withdraws the Z-controller and moves motors in the ZMinus direction (away from surface). It is skipped when the connection is poisoned. Default: disabled.

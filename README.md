@@ -11,7 +11,7 @@ A Rust client library for communicating with [Nanonis](https://www.specs-group.c
 - **Type-safe API**: Strongly-typed Rust interface to Nanonis commands
 - **Comprehensive coverage**: Support for motors, scanning, spectroscopy, oscilloscopes, and more
 - **TCPLogger streaming**: Continuous data acquisition support
-- **Safety features**: Automatic tip withdrawal and motor positioning on client drop
+- **Safety features**: Opt-in tip withdrawal and motor positioning on client drop (`safe_tip_on_drop`, off by default; skipped on a poisoned connection)
 - **Protocol abstraction**: Low-level protocol details handled internally
 
 ## Supported Functionality
@@ -34,7 +34,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-nanonis-rs = "0.4.0"
+nanonis-rs = "0.5.0"
 ```
 
 ### Basic Example
@@ -148,7 +148,7 @@ let client = NanonisClient::new("192.168.1.100", 6501)?;
 The client includes optional safety features:
 
 - **Timeout protection**: All operations have configurable timeouts
-- **Optional auto-withdrawal**: Enable `safe_tip_on_drop` to automatically withdraw the tip and move motors to a safe position when the client is dropped
+- **Optional auto-withdrawal**: Enable `safe_tip_on_drop` to automatically withdraw the tip and move motors to a safe position when the client is dropped. Default off. It is skipped when the connection is poisoned, since commands on a desynchronized stream cannot be trusted
 
 ```rust
 // Enable automatic tip safety on drop (opt-in)
@@ -182,7 +182,7 @@ The underlying protocol spec is included as [`docs/tcp-protocol.md`](docs/tcp-pr
 
 ## Requirements
 
-- Rust 2021 edition or later
+- Rust 1.85 or later (the crate uses edition 2024)
 - Nanonis system with TCP interface enabled
 - Network access to Nanonis controller
 
