@@ -252,6 +252,10 @@ impl NanonisClient {
     /// Returns the current sweep configuration including number of steps,
     /// timing, and save behavior.
     ///
+    /// `BiasSwp.PropsGet` is not in the protocol spec revision this crate
+    /// targets (R14718, April 2025), which lists only `BiasSwp.PropsSet`.
+    /// The server may not implement it, and the reply layout here is unverified.
+    ///
     /// # Returns
     /// A tuple containing:
     /// - `u16` - Number of bias steps in the sweep
