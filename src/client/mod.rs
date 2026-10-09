@@ -240,8 +240,9 @@ impl NanonisClientBuilder {
 /// # Connection Management
 ///
 /// The client maintains a persistent TCP connection to the Nanonis server.
-/// If an I/O error occurs during a command, the client is **poisoned** to
-/// prevent desynchronized reads on a corrupted stream. Call
+/// If an I/O error occurs during a command, or the server answers with a
+/// response for a different command, the client is **poisoned** to prevent
+/// desynchronized reads on a corrupted stream. Call
 /// [`reconnect()`](Self::reconnect) to re-establish the connection, or check
 /// [`is_poisoned()`](Self::is_poisoned) to inspect the state.
 ///
@@ -385,9 +386,11 @@ impl NanonisClient {
         &self.config
     }
 
-    /// Returns `true` if the connection has been poisoned by an I/O error.
+    /// Returns `true` if the connection has been poisoned by an I/O error or
+    /// a mismatched response header.
     ///
-    /// After a failed read or write, the TCP stream may be in a desynchronized
+    /// After a failed read or write, or a response for a different command,
+    /// the TCP stream may be in a desynchronized
     /// state where subsequent commands would parse garbage data. The client
     /// refuses further commands until [`reconnect()`](Self::reconnect) is called.
     pub fn is_poisoned(&self) -> bool {
@@ -397,7 +400,7 @@ impl NanonisClient {
     /// Re-establish the TCP connection using the original address and configuration.
     ///
     /// This drops the old stream, connects a new one, and clears the poisoned flag.
-    /// Use this after an I/O error has poisoned the client, or when the Nanonis
+    /// Use this after an I/O or framing error has poisoned the client, or when the Nanonis
     /// application has been restarted.
     pub fn reconnect(&mut self) -> Result<(), NanonisError> {
         let socket_addr: SocketAddr = format!("{}:{}", self.address, self.port)
@@ -483,7 +486,7 @@ impl NanonisClient {
             return Err(NanonisError::Io {
                 source: std::io::Error::new(
                     std::io::ErrorKind::NotConnected,
-                    "connection poisoned after previous I/O error",
+                    "connection poisoned after a previous I/O or framing error",
                 ),
                 context: format!(
                     "Cannot send '{command}': call reconnect() to re-establish the connection"
@@ -556,8 +559,15 @@ impl NanonisClient {
             String::from_utf8_lossy(&response_header[0..32]).trim_end_matches('\0')
         );
 
-        // Validate and get body size
-        let body_size = Protocol::validate_response_header(&response_header, command)?;
+        // Validate and get body size. A response for a different command
+        // means the stream is out of step, and its body size cannot be
+        // trusted to drain it, so poison the connection.
+        let body_size =
+            Protocol::validate_response_header(&response_header, command).map_err(|e| {
+                debug!("Response header rejected: {}", e);
+                self.poisoned = true;
+                e
+            })?;
         debug!("Expected response body size: {}", body_size);
 
         // Read response body with size validation
@@ -607,5 +617,67 @@ impl Drop for NanonisClient {
             let _ = self.z_ctrl_withdraw(false, Duration::from_secs(2));
             let _ = self.motor_start_move(MotorDirection::ZMinus, 15u16, MotorGroup::Group1, false);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Read;
+    use std::net::TcpListener;
+    use std::thread;
+
+    /// Serve one request on a loopback socket, answering with a response
+    /// header for `reply_command` and the given body.
+    fn one_shot_server(reply_command: &'static str, reply_body: Vec<u8>) -> u16 {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        thread::spawn(move || {
+            let (mut sock, _) = listener.accept().unwrap();
+            let mut header = [0u8; HEADER_SIZE];
+            sock.read_exact(&mut header).unwrap();
+            let reply = Protocol::create_command_header(reply_command, reply_body.len() as u32);
+            sock.write_all(&reply).unwrap();
+            sock.write_all(&reply_body).unwrap();
+            // Hold the socket open until the client is done with it.
+            let mut sink = Vec::new();
+            let _ = sock.read_to_end(&mut sink);
+        });
+        port
+    }
+
+    #[test]
+    fn command_mismatch_poisons_connection() {
+        let port = one_shot_server("Scan.Start", vec![0u8; 8]);
+        let mut client = NanonisClient::builder()
+            .address("127.0.0.1")
+            .port(port)
+            .build()
+            .unwrap();
+
+        let err = client
+            .quick_send_raw("Bias.Get", vec![], vec![])
+            .unwrap_err();
+        assert!(err.is_protocol(), "expected Protocol, got {err:?}");
+        assert!(client.is_poisoned());
+
+        let err = client
+            .quick_send_raw("Bias.Get", vec![], vec![])
+            .unwrap_err();
+        assert!(err.is_io(), "expected refusal, got {err:?}");
+    }
+
+    #[test]
+    fn matching_response_leaves_connection_healthy() {
+        let port = one_shot_server("Bias.Get", vec![0u8; 8]);
+        let mut client = NanonisClient::builder()
+            .address("127.0.0.1")
+            .port(port)
+            .build()
+            .unwrap();
+
+        let body = client.quick_send_raw("Bias.Get", vec![], vec![]).unwrap();
+        assert_eq!(body.len(), 8);
+        assert!(!client.is_poisoned());
     }
 }
