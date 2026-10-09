@@ -722,7 +722,7 @@ impl NanonisClient {
         comparison: u16,
     ) -> Result<(), NanonisError> {
         self.quick_send(
-            "ZSpectr.RetractSecondSet",
+            "ZSpectr.Retract2ndSet",
             vec![
                 NanonisValue::I32(condition),
                 NanonisValue::F32(threshold),
@@ -744,14 +744,14 @@ impl NanonisClient {
     /// Returns `NanonisError` if communication fails.
     pub fn z_spectr_retract_second_get(&mut self) -> Result<(i32, f32, i32, u16), NanonisError> {
         let result = self.quick_send(
-            "ZSpectr.RetractSecondGet",
+            "ZSpectr.Retract2ndGet",
             vec![],
             vec![],
             vec!["i", "f", "i", "H"],
         )?;
         if result.len() < 4 {
             return Err(NanonisError::Protocol(
-                "Truncated response from ZSpectr.RetractSecondGet".to_string(),
+                "Truncated response from ZSpectr.Retract2ndGet".to_string(),
             ));
         }
         Ok((

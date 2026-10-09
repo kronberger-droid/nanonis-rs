@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- A response header naming a different command now poisons the connection,
+  like an I/O failure. Previously it returned `NanonisError::Protocol` and
+  left the unread body on the socket, so the next command read the wrong
+  reply. Later commands are refused until `reconnect()`.
+- A nonzero error status with an empty or whitespace-only description is
+  now `NanonisError::Server` with a placeholder message. It used to read as
+  success.
+- `osci2t_ch_set`/`osci2t_ch_get` send `Osci2T.ChsSet`/`Osci2T.ChsGet`, and
+  `z_spectr_retract_second_set`/`z_spectr_retract_second_get` send
+  `ZSpectr.Retract2ndSet`/`ZSpectr.Retract2ndGet`, the names in the spec.
+  The method names are unchanged.
+- `TCPLoggerStream` read stalls now surface as `NanonisError::Timeout`
+  instead of `NanonisError::Io`.
+
+### Documentation
+
+- `bias_sweep_props_get` (`BiasSwp.PropsGet`) and `signals_in_slots_get`
+  (`Signals.InSlotsGet`) are marked as absent from the spec revision the
+  crate targets (R14718); the server may not implement them.
+- README: `safe_tip_on_drop` is described as opt-in and skipped on a
+  poisoned connection; Quick Start version and toolchain requirement match
+  `Cargo.toml`. CLAUDE.md no longer claims there are no unit tests.
+
 ## [0.5.0] - 2026-08-12
 
 ### Added

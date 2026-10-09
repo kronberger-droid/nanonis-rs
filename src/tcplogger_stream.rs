@@ -136,10 +136,7 @@ impl TCPLoggerStream {
         // Read header into buffer
         self.stream
             .read_exact(&mut self.buffer[..header_size])
-            .map_err(|e| NanonisError::Io {
-                source: e,
-                context: "Reading TCP Logger frame header".to_string(),
-            })?;
+            .map_err(|e| NanonisError::from_io(e, "Reading TCP Logger frame header"))?;
 
         // Parse header from buffer
         let mut cursor = Cursor::new(&self.buffer[..header_size]);
@@ -159,10 +156,7 @@ impl TCPLoggerStream {
 
         self.stream
             .read_exact(&mut self.buffer[..data_size])
-            .map_err(|e| NanonisError::Io {
-                source: e,
-                context: "Reading TCP Logger frame data".to_string(),
-            })?;
+            .map_err(|e| NanonisError::from_io(e, "Reading TCP Logger frame data"))?;
 
         // Parse data values from buffer
         let mut cursor = Cursor::new(&self.buffer[..data_size]);
@@ -172,5 +166,43 @@ impl TCPLoggerStream {
         }
 
         Ok(SignalFrame { counter, data })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::net::TcpListener;
+
+    /// Connect to a loopback listener. The returned peer socket is kept
+    /// alive by the caller so the stream stays open but silent.
+    fn silent_stream(read_timeout: Duration) -> (TCPLoggerStream, TcpStream) {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let stream = TcpStream::connect(listener.local_addr().unwrap()).unwrap();
+        let (peer, _) = listener.accept().unwrap();
+        stream.set_read_timeout(Some(read_timeout)).unwrap();
+        let logger = TCPLoggerStream {
+            stream,
+            buffer: Vec::with_capacity(1024),
+        };
+        (logger, peer)
+    }
+
+    #[test]
+    fn read_stall_is_timeout() {
+        let (mut logger, _peer) = silent_stream(Duration::from_millis(50));
+        let err = logger.read_frame_raw().unwrap_err();
+        assert!(
+            matches!(err, NanonisError::Timeout(ref ctx) if ctx.contains("frame header")),
+            "expected Timeout, got {err:?}"
+        );
+    }
+
+    #[test]
+    fn closed_stream_is_io() {
+        let (mut logger, peer) = silent_stream(Duration::from_secs(5));
+        drop(peer);
+        let err = logger.read_frame_raw().unwrap_err();
+        assert!(err.is_io(), "expected Io, got {err:?}");
     }
 }

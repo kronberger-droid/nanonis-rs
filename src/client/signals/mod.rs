@@ -350,6 +350,10 @@ impl NanonisClient {
     /// Input slots represent the physical or virtual input sources that feed
     /// into each signal channel.
     ///
+    /// `Signals.InSlotsGet` is not in the protocol spec revision this crate
+    /// targets (R14718, April 2025). The server may not implement it, and the
+    /// reply layout here is unverified.
+    ///
     /// # Returns
     /// Vector of input slot indices, one for each signal in the system.
     ///
