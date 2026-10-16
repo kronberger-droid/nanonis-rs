@@ -2,216 +2,59 @@
 
 [![Crates.io](https://img.shields.io/crates/v/nanonis-rs.svg)](https://crates.io/crates/nanonis-rs)
 [![Documentation](https://docs.rs/nanonis-rs/badge.svg)](https://docs.rs/nanonis-rs)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A Rust client library for communicating with [Nanonis](https://www.specs-group.com/nanonis/) SPM (Scanning Probe Microscopy) systems via the Nanonis TCP protocol. This library provides a type-safe, high-level interface for controlling scanning probe microscopes and reading measurement data.
-
-## Features
-
-- **Type-safe API**: Strongly-typed Rust interface to Nanonis commands
-- **Comprehensive coverage**: Support for motors, scanning, spectroscopy, oscilloscopes, and more
-- **TCPLogger streaming**: Continuous data acquisition support
-- **Safety features**: Automatic tip withdrawal and motor positioning on client drop
-- **Protocol abstraction**: Low-level protocol details handled internally
-
-## Supported Functionality
-
-- **Bias control**: Set and read bias voltage
-- **Signal acquisition**: Read signal values and metadata
-- **Motor control**: Precise control of XYZ motors and FolMe positioning
-- **Z-controller**: Z-feedback loop control and monitoring
-- **Scanning**: Scan control and data acquisition
-- **Auto-approach**: Automated tip approach functionality
-- **Oscilloscopes**: Single-trigger, dual-trigger, and high-resolution modes
-- **Spectroscopy**: Z-spectroscopy and bias sweeps
-- **Tip management**: Tip shaping and recovery procedures
-- **PLL control**: Phase-locked loop operations
-- **TCPLogger**: Real-time data streaming
-
-## Quick Start
-
-Add this to your `Cargo.toml`:
-
-```toml
-[dependencies]
-nanonis-rs = "0.4.0"
-```
-
-### Basic Example
-
-```rust
-use nanonis_rs::{NanonisClient, NanonisError};
-
-fn main() -> Result<(), NanonisError> {
-    // Connect to Nanonis system
-    let mut client = NanonisClient::new("192.168.1.100", 6501)?;
-
-    // Get current bias voltage
-    let bias = client.bias_get()?;
-    println!("Current bias: {} V", bias);
-
-    // Set new bias voltage
-    client.bias_set(0.5)?;
-
-    // Read signal names
-    let signal_names = client.signal_names_get()?;
-    println!("Available signals: {:?}", signal_names);
-
-    // Read specific signal values (indices 0, 1, 2)
-    let values = client.signals_vals_get(vec![0, 1, 2], true)?;
-    println!("Signal values: {:?}", values);
-
-    Ok(())
-}
-```
-
-### Motor Control Example
-
-```rust
-use nanonis_rs::{NanonisClient, NanonisError};
-use nanonis_rs::motor::{MotorDirection, MotorGroup};
-use std::time::Duration;
-
-fn main() -> Result<(), NanonisError> {
-    let mut client = NanonisClient::new("192.168.1.100", 6501)?;
-
-    // Move motor with specified steps
-    client.motor_start_move(
-        MotorDirection::ZPlus,
-        1000u16,  // steps
-        MotorGroup::Group1,
-        false  // non-blocking
-    )?;
-
-    // Wait for movement to complete
-    std::thread::sleep(Duration::from_millis(500));
-
-    Ok(())
-}
-```
-
-### TCPLogger Streaming Example
-
-```rust
-use nanonis_rs::TCPLoggerStream;
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Connect to the TCP Logger data stream (separate from the control port)
-    let mut stream = TCPLoggerStream::new("192.168.1.100", 6590)?;
-
-    // Read streaming data (counter-0 metadata frames are filtered automatically)
-    loop {
-        let frame = stream.read_frame()?;
-        println!("Frame #{}: {} channels",
-                 frame.counter, frame.data.len());
-
-        // Process channel data (f32 values)...
-    }
-}
-```
-
-## Architecture
-
-The library is organized into several layers:
-
-- **Protocol layer** (`protocol.rs`): Low-level TCP message encoding/decoding
-- **Type system** (`types.rs`): Protocol value types and domain-specific types
-- **Client layer** (`client/`): High-level API organized by functionality
-- **Error handling** (`error.rs`): Comprehensive error types with context
-
-All communication with Nanonis follows a request-response pattern with strongly-typed inputs and outputs.
-
-## Connection Configuration
-
-Create clients using the builder pattern for advanced configuration:
+A type-safe Rust client for the [Nanonis](https://www.specs-group.com/nanonis/)
+TCP protocol, for scripting STM and AFM experiments on a Nanonis SPM
+controller.
 
 ```rust
 use nanonis_rs::NanonisClient;
-use std::time::Duration;
 
-let client = NanonisClient::builder()
-    .address("192.168.1.100")
-    .port(6501)
-    .connect_timeout(Duration::from_secs(10))
-    .read_timeout(Duration::from_secs(30))
-    .build()?;
-```
+fn main() -> Result<(), nanonis_rs::NanonisError> {
+    let mut client = NanonisClient::new("127.0.0.1", 6501)?;
 
-Or use the simpler constructor:
-
-```rust
-let client = NanonisClient::new("192.168.1.100", 6501)?;
-```
-
-## Safety Features
-
-The client includes optional safety features:
-
-- **Timeout protection**: All operations have configurable timeouts
-- **Optional auto-withdrawal**: Enable `safe_tip_on_drop` to automatically withdraw the tip and move motors to a safe position when the client is dropped
-
-```rust
-// Enable automatic tip safety on drop (opt-in)
-let client = NanonisClient::builder()
-    .address("192.168.1.100")
-    .port(6501)
-    .safe_tip_on_drop(true)  // Will withdraw tip when client drops
-    .build()?;
-```
-
-## Error Handling
-
-The library uses typed errors via `NanonisError`:
-
-```rust
-match client.bias_get() {
-    Ok(bias) => println!("Bias: {} V", bias),
-    Err(NanonisError::Timeout(_)) => eprintln!("Connection timeout"),
-    Err(NanonisError::Server { code, message }) => {
-        eprintln!("Server error {}: {}", code, message)
+    println!("bias: {} V", client.bias_get()?);
+    for (i, name) in client.signal_names_get()?.iter().enumerate() {
+        println!("{i}: {name}");
     }
-    Err(e) => eprintln!("Error: {}", e),
+    Ok(())
 }
 ```
 
-## Documentation
+- **Broad coverage.** Around 580 of the protocol's commands, from bias, Z
+  controller and motors to scans, spectroscopy, oscilloscopes and the PLL,
+  each as a method with typed arguments and results.
+- **Streaming.** `TCPLoggerStream` reads the TCP Logger data port frame by
+  frame, optionally on a background thread.
+- **Typed errors.** `NanonisError` separates timeouts, I/O and server-side
+  errors with their code and message.
+- **Opt-in tip safety.** `NanonisClient::builder().safe_tip_on_drop(true)`
+  withdraws the tip and moves the motors clear when the client drops.
+- **No panics.** Panic paths are denied crate-wide, so a failed command
+  returns an error instead of taking the caller down.
 
-Full API documentation is available on [docs.rs](https://docs.rs/nanonis-rs). The documentation includes detailed examples for each command.
+## Install
 
-The underlying protocol spec is included as [`docs/tcp-protocol.md`](docs/tcp-protocol.md), a markdown conversion of the SPECS "Nanonis TCP Protocol" document (R14718, April 2025). It covers all 661 commands with their arguments and return values, and is searchable with `rg '^#### Scan\.' docs/tcp-protocol.md`.
-
-## Requirements
-
-- Rust 2021 edition or later
-- Nanonis system with TCP interface enabled
-- Network access to Nanonis controller
-
-## Development
-
-This project uses Nix flakes for reproducible development environments:
-
-```bash
-# Enter development shell
-nix develop
-
-# Build the library
-cargo build
-
-# Run tests (requires Nanonis connection)
-cargo test
-
-# Build documentation
-cargo doc --open
+```sh
+cargo add nanonis-rs
 ```
+
+Needs a Nanonis controller with the TCP interface enabled, reachable on its
+control ports (typically 6501 to 6504) and, for streaming, the TCP Logger port
+(typically 6590).
+
+## Docs
+
+- [API reference](https://docs.rs/nanonis-rs) on docs.rs
+- [`examples/`](examples) for runnable programs
+- [`docs/tcp-protocol.md`](docs/tcp-protocol.md), the SPECS "Nanonis TCP
+  Protocol" manual (R14718, April 2025) as searchable markdown
+- [CHANGELOG](CHANGELOG.md)
+
+[rusty-tip](https://github.com/kronberger-droid/rusty-tip) builds
+controller-agnostic SPM automation on top of this crate.
 
 ## License
 
-Licensed under the MIT License. See [LICENSE](LICENSE) for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit pull requests or open issues on [GitHub](https://github.com/kronberger-droid/nanonis-rs).
-
-## Acknowledgments
-
-This library implements the Nanonis TCP protocol as documented by SPECS Zurich GmbH. Nanonis is a registered trademark of SPECS Zurich GmbH.
+[MIT](LICENSE). Nanonis is a registered trademark of SPECS Zurich GmbH.
